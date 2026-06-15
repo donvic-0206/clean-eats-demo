@@ -1279,9 +1279,10 @@
       <div class="section">
         <div class="eyebrow">Wochenfokus</div>
         <div class="focus-tags" id="focus-tags">
-          <button class="pill" data-focus="defizit">Kaloriendefizit</button>
           <button class="pill" data-focus="protein">Mehr Protein</button>
           <button class="pill" data-focus="training">Trainingsernährung</button>
+          <button class="pill" data-focus="regeneration">Regeneration</button>
+          <button class="pill" data-focus="neue_gerichte">Neue Gerichte</button>
         </div>
       </div>
 
@@ -1301,14 +1302,11 @@
         <div class="field-card full">
           <span class="ftitle">Ziel</span>
           <div class="goal-row" id="goal-row">
-            <button class="goal-opt active" data-goal="abnehmen">
+            <button class="goal-opt" data-goal="fat_loss">
               <span class="gnum">01</span><span class="gname">Abnehmen</span>
             </button>
-            <button class="goal-opt" data-goal="muskel">
-              <span class="gnum">02</span><span class="gname">Muskelaufbau</span>
-            </button>
-            <button class="goal-opt" data-goal="gesund">
-              <span class="gnum">03</span><span class="gname">Gesünder essen</span>
+            <button class="goal-opt" data-goal="performance">
+              <span class="gnum">02</span><span class="gname">Performance</span>
             </button>
           </div>
         </div>
@@ -1546,13 +1544,13 @@ function runDevAnimations() {
   buildRadar(_devData.adherenz_pct);
   countUp(document.getElementById('radar-num'), _devData.adherenz_pct, 1800);
   countUp(document.getElementById('streak-num'), _devData.streak, 1500);
-  if (_devData.weight_diff !== null) {
+  if (_devData.weight_diff != null && Number.isFinite(_devData.weight_diff) && _devData.weight_diff !== 0) {
     const absD = Math.abs(_devData.weight_diff);
-    countUp(document.getElementById('weight-diff-num'), Math.round(absD * 10) / 10, 1400);
+    countUp(document.getElementById('weight-diff-num'), Math.round(absD), 1400);
     setTimeout(() => {
       document.getElementById('weight-diff-num').textContent = absD.toFixed(1).replace('.', ',');
     }, 1450);
-    document.getElementById('weight-diff-sign').textContent = _devData.weight_diff >= 0 ? '−' : '+';
+    document.getElementById('weight-diff-sign').textContent = _devData.weight_diff > 0 ? '−' : '+';
   }
   if (_devData.weight_history.length > 1) buildWeightCurve(_devData.weight_history);
   if (_devData.sleep_energy.length > 1) buildSleepEnergyCurve(_devData.sleep_energy);
@@ -1595,10 +1593,11 @@ function populate(d) {
       `${fmtDate(first.date)} · ${String(first.kg).replace('.', ',')} kg`;
     document.getElementById('weight-axis-end').textContent =
       `Heute · ${String(last.kg).replace('.', ',')} kg`;
-    // Caption: duration
-    const weeks = Math.round(d.weight_history.length / 2);
+    // Caption: echte Dauer aus erstem und letztem Datum
+    const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+    const weeks = Math.round((new Date(last.date) - new Date(first.date)) / msPerWeek);
     document.getElementById('weight-caption').textContent =
-      `Seit Start · vor ${weeks > 1 ? weeks + ' Wochen' : '1 Woche'}`;
+      weeks > 1 ? `Seit Start · vor ${weeks} Wochen` : 'Seit Start';
   }
 
   // Sleep/energy axis
@@ -1646,10 +1645,9 @@ function populate(d) {
     p.classList.toggle('active', p.dataset.focus === d.weekly_focus));
 
   // Goal
-  const goalMap = { fat_loss: 'abnehmen', performance: 'muskel' };
-  const goalKey = goalMap[d.goal] ?? 'gesund';
+  // data-goal jetzt direkt der API-Wert ("fat_loss" | "performance")
   document.querySelectorAll('.goal-opt').forEach(o =>
-    o.classList.toggle('active', o.dataset.goal === goalKey));
+    o.classList.toggle('active', o.dataset.goal === d.goal));
 
   // Current weight
   if (d.current_weight_kg != null) {
@@ -1658,7 +1656,7 @@ function populate(d) {
   }
 
   // Weight trend
-  if (d.weight_diff != null && d.weight_diff !== 0) {
+  if (d.weight_diff != null && Number.isFinite(d.weight_diff) && d.weight_diff !== 0) {
     const sign = d.weight_diff > 0 ? '−' : '+';
     document.getElementById('weight-trend').innerHTML =
       `${sign}${Math.abs(d.weight_diff).toFixed(1).replace('.', ',')} kg <em>seit Start</em>`;
@@ -1788,8 +1786,8 @@ document.getElementById('goal-row').addEventListener('click', async e => {
   if (!g) return;
   document.querySelectorAll('.goal-opt').forEach(o => o.classList.remove('active'));
   g.classList.add('active');
-  const goalMap = { abnehmen: 'fat_loss', muskel: 'performance', gesund: 'fat_loss' };
-  await apiPatch('update_goal', { goal: goalMap[g.dataset.goal] ?? 'fat_loss' });
+  // data-goal ist direkt der API-Wert
+  await apiPatch('update_goal', { goal: g.dataset.goal });
 });
 
 // Days
