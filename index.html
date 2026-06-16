@@ -1,1846 +1,1268 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Clean Eats — Portal</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --black: #000000;
-    --card: #1C1C1E;
-    --forest: #1F2C24;
-    --forest-dim: #16201B;
-    --orange: #FF7A2F;
-    --orange-dim: rgba(255, 122, 47, 0.14);
-    --orange-glow: rgba(255, 122, 47, 0.35);
-    --white: #FFFFFF;
-    --line: rgba(255,255,255,0.08);
-    --line-soft: rgba(255,255,255,0.04);
-    --ink-1: #FFFFFF;
-    --ink-2: #98989D;
-    --ink-3: #636366;
-    --ink-4: #3A3A3C;
-    --serif: -apple-system, 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif;
-    --sans: -apple-system, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
-    --mono:  'JetBrains Mono', monospace;
-    --ease:  cubic-bezier(0.16, 1, 0.3, 1);
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clean Eats Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@1&family=JetBrains+Mono:wght@300;400&family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #0A0A0A;
+      --card: #161616;
+      --orange: #FF7A2F;
+      --orange-dim: rgba(255,122,47,0.14);
+      --orange-glow: rgba(255,122,47,0.35);
+      --ink-1: #FFFFFF;
+      --ink-2: #8A8A8A;
+      --ink-3: #545454;
+      --ink-4: #2E2E2E;
+      --line: #1F2C24;
+      --serif: 'Instrument Serif', serif;
+      --sans: 'Space Grotesk', system-ui, sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+      --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { background: var(--black); color: var(--ink-1); }
-  body {
-    font-family: var(--sans);
-    font-weight: 300;
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-    min-height: 100vh;
-    overflow-x: hidden;
-    letter-spacing: 0.01em;
-  }
-  ::selection { background: var(--orange); color: var(--black); }
+    body {
+      background: var(--black);
+      color: var(--ink-1);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-  /* ─── ATMOSPHERIC AMBIENT GLOWS ─────────────────────────── */
-  .ambient {
-    position: fixed; inset: 0;
-    pointer-events: none; z-index: 0;
-    overflow: hidden;
-  }
-  .ambient::before, .ambient::after {
-    content: ""; position: absolute;
-    width: 60vw; height: 60vw;
-    border-radius: 50%;
-    filter: blur(120px);
-    opacity: 0.35;
-  }
-  .ambient::before {
-    background: radial-gradient(circle, rgba(255,122,47,0.08), transparent 70%);
-    top: -20vw; right: -15vw;
-  }
-  .ambient::after {
-    background: radial-gradient(circle, rgba(31,44,36,0.45), transparent 70%);
-    bottom: -25vw; left: -10vw;
-  }
+    /* ── Loading ── */
+    #loading {
+      position: fixed; inset: 0;
+      background: var(--black);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 24px; z-index: 100;
+    }
+    #loading .logo {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 28px;
+      color: var(--ink-1);
+    }
+    #loading .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--orange);
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; transform: scale(0.8); }
+      50%       { opacity: 1;   transform: scale(1.2); }
+    }
 
-  /* ─── LAYOUT SHELL ──────────────────────────────────────── */
-  .shell {
-    position: relative;
-    z-index: 1;
-    display: grid;
-    grid-template-columns: 220px 1fr;
-    min-height: 100vh;
-  }
-  @media (max-width: 880px) {
-    .shell { grid-template-columns: 1fr; }
-  }
+    /* ── Error ── */
+    #error-screen {
+      display: none;
+      position: fixed; inset: 0;
+      background: var(--black);
+      align-items: center; justify-content: center;
+      flex-direction: column;
+      gap: 16px; padding: 32px;
+      text-align: center;
+      z-index: 100;
+    }
+    #error-screen p {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--ink-2);
+      line-height: 1.6;
+    }
 
-  /* ─── LEFT NAV (DESKTOP) ────────────────────────────────── */
-  .nav-left {
-    position: fixed;
-    top: 0; left: 0; bottom: 0;
-    width: 220px;
-    padding: 32px 28px;
-    border-right: 1px solid var(--line);
-    display: flex; flex-direction: column;
-    background: linear-gradient(180deg, rgba(10,10,10,0.92), rgba(10,10,10,0.78));
-    backdrop-filter: blur(8px);
-    z-index: 10;
-  }
-  .brand {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 22px;
-    letter-spacing: -0.01em;
-    color: var(--ink-1);
-    line-height: 1;
-  }
-  .brand small {
-    display: block;
-    font-family: var(--mono);
-    font-style: normal;
-    font-size: 9px;
-    font-weight: 300;
-    color: var(--ink-3);
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    margin-top: 10px;
-  }
-  .nav-items {
-    margin-top: 64px;
-    display: flex; flex-direction: column;
-    gap: 4px;
-  }
-  .nav-item {
-    background: none; border: none;
-    text-align: left;
-    padding: 14px 0;
-    font-family: var(--sans);
-    font-weight: 300;
-    font-size: 14px;
-    color: var(--ink-3);
-    cursor: pointer;
-    transition: color 0.4s var(--ease);
-    position: relative;
-    letter-spacing: 0.01em;
-  }
-  .nav-item .idx {
-    font-family: var(--mono);
-    font-size: 9px;
-    color: var(--ink-4);
-    margin-right: 14px;
-    letter-spacing: 0.1em;
-    transition: color 0.4s var(--ease);
-  }
-  .nav-item:hover { color: var(--ink-2); }
-  .nav-item.active {
-    color: var(--ink-1);
-  }
-  .nav-item.active .idx { color: var(--orange); }
-  .nav-item.active::before {
-    content: "";
-    position: absolute;
-    left: -28px; top: 50%;
-    width: 18px; height: 1px;
-    background: var(--orange);
-    transform: translateY(-50%);
-    animation: pulse-line 2.6s ease-in-out infinite;
-  }
-  @keyframes pulse-line {
-    0%, 100% { opacity: 0.45; width: 12px; }
-    50%      { opacity: 1;    width: 22px; }
-  }
-  .nav-foot {
-    margin-top: auto;
-    font-family: var(--mono);
-    font-size: 9px;
-    color: var(--ink-3);
-    letter-spacing: 0.18em;
-    line-height: 1.7;
-  }
-  .nav-foot .pulse-dot {
-    display: inline-block;
-    width: 6px; height: 6px;
-    background: #2dd66f;
-    border-radius: 50%;
-    margin-right: 8px;
-    box-shadow: 0 0 12px rgba(45, 214, 111, 0.65);
-    animation: pulse-dot 2s ease-in-out infinite;
-    vertical-align: middle;
-  }
-  @keyframes pulse-dot {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50%      { transform: scale(1.35); opacity: 0.55; }
-  }
+    /* ── App Shell ── */
+    #app {
+      display: none;
+      width: 100%;
+      max-width: 480px;
+      flex-direction: column;
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
 
-  /* ─── MAIN CONTENT ──────────────────────────────────────── */
-  .main {
-    grid-column: 2;
-    padding: 56px 64px 140px;
-    max-width: 1100px;
-    position: relative;
-  }
-  @media (max-width: 880px) {
-    .main { grid-column: 1; padding: 28px 22px 120px; }
-    .nav-left { display: none; }
-  }
+    /* ── Bottom Nav ── */
+    #bottom-nav {
+      position: fixed;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 100%; max-width: 480px;
+      background: rgba(10,10,10,0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid var(--ink-4);
+      display: flex;
+      height: 64px;
+      z-index: 50;
+    }
+    .nav-tab {
+      flex: 1;
+      display: flex; align-items: center; justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      border: none; background: none;
+      color: var(--ink-3);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      transition: color 0.2s;
+      padding: 0;
+    }
+    .nav-tab .num { font-size: 9px; color: inherit; }
+    .nav-tab.active .num { color: var(--orange); }
+    .nav-tab.active { color: var(--ink-1); }
 
-  /* Persistent top header on mobile (mirrors desktop signaling) */
-  .topbar {
-    display: none;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 18px;
-    margin-bottom: 28px;
-    border-bottom: 1px solid var(--line);
-  }
-  .topbar .brand { font-size: 17px; }
-  .topbar .brand small { display: none; }
-  .topbar .status {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--ink-2);
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-  }
-  .topbar .status .pulse-dot {
-    display: inline-block;
-    width: 6px; height: 6px;
-    background: #2dd66f;
-    border-radius: 50%;
-    margin-right: 6px;
-    box-shadow: 0 0 10px rgba(45, 214, 111, 0.6);
-    animation: pulse-dot 2s ease-in-out infinite;
-    vertical-align: middle;
-  }
-  @media (max-width: 880px) {
-    .topbar { display: flex; }
-  }
+    /* ── Tab panels ── */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
 
-  /* ─── TAB PANELS ────────────────────────────────────────── */
-  .panel { display: none; }
-  .panel.active {
-    display: block;
-    animation: fade-up 0.65s var(--ease) both;
-  }
-  @keyframes fade-up {
-    from { opacity: 0; transform: translateY(14px); filter: blur(4px); }
-    to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
-  }
+    /* ── Section ── */
+    .section {
+      padding: 28px 20px;
+      border-bottom: 1px solid var(--ink-4);
+    }
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: var(--ink-2);
+      margin-bottom: 16px;
+    }
+    .eyebrow-row {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px;
+    }
+    .eyebrow-row .eyebrow { margin-bottom: 0; }
 
-  /* Reveal on intersection */
-  .reveal { opacity: 0; transform: translateY(10px); transition: opacity 0.9s var(--ease), transform 0.9s var(--ease); }
-  .reveal.in { opacity: 1; transform: translateY(0); }
-  .reveal[data-delay="1"] { transition-delay: 0.08s; }
-  .reveal[data-delay="2"] { transition-delay: 0.16s; }
-  .reveal[data-delay="3"] { transition-delay: 0.24s; }
-  .reveal[data-delay="4"] { transition-delay: 0.32s; }
-  .reveal[data-delay="5"] { transition-delay: 0.4s; }
-  .reveal[data-delay="6"] { transition-delay: 0.48s; }
+    /* ── Cards (Tab 03) ── */
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 12px;
+    }
+    .card-title {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: var(--ink-2);
+      margin-bottom: 16px;
+    }
 
-  /* ─── SHARED TYPOGRAPHY ─────────────────────────────────── */
-  .eyebrow {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--ink-3);
-    letter-spacing: 0.28em;
-    text-transform: uppercase;
-  }
-  .whisper {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: clamp(28px, 4vw, 44px);
-    line-height: 1.1;
-    color: var(--ink-1);
-    letter-spacing: -0.015em;
-  }
-  .whisper em { font-style: italic; color: var(--orange); }
-  .label-meta {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--ink-3);
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-  }
+    /* ── Arc ── */
+    #arc-wrap {
+      position: relative;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    #arc-svg { width: 100%; max-width: 320px; height: auto; }
+    .arc-center {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -52%);
+      text-align: center;
+      pointer-events: none;
+    }
+    .arc-num {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 72px;
+      color: var(--ink-1);
+      line-height: 1;
+    }
+    .arc-pct {
+      font-family: var(--mono);
+      font-size: 18px;
+      color: var(--orange);
+      vertical-align: super;
+    }
+    .arc-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--ink-2);
+      letter-spacing: 0.1em;
+      margin-top: 4px;
+    }
+    .arc-days-note {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--ink-1);
+      letter-spacing: 0.05em;
+      line-height: 1.5;
+      text-align: right;
+      margin-top: -8px;
+      padding-right: 20px;
+      align-self: flex-end;
+    }
+    .arc-days-line {
+      display: inline-block;
+      width: 20px; height: 1px;
+      background: var(--orange);
+      vertical-align: middle;
+      margin-right: 6px;
+    }
 
-  /* ─── TAB 1: ENTWICKLUNG ────────────────────────────────── */
+    /* ── Streak ── */
+    .streak-row { display: flex; align-items: baseline; gap: 12px; }
+    .streak-num {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 120px;
+      color: var(--orange);
+      line-height: 0.9;
+    }
+    .streak-label {
+      font-family: var(--sans);
+      font-size: 16px;
+      color: var(--ink-2);
+      font-weight: 300;
+      max-width: 100px;
+    }
 
-  /* Asymmetric grid */
-  .dev-grid {
-    display: grid;
-    grid-template-columns: 1.4fr 1fr;
-    gap: 80px;
-    margin-top: 64px;
-  }
-  @media (max-width: 880px) {
-    .dev-grid { grid-template-columns: 1fr; gap: 64px; margin-top: 40px; }
-  }
+    /* ── Milestone ── */
+    .milestone-num {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 56px;
+      color: var(--orange);
+    }
+    .milestone-text {
+      font-family: var(--sans);
+      font-size: 16px;
+      color: var(--ink-1);
+      font-weight: 300;
+    }
+    .milestone-sub {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--ink-3);
+      letter-spacing: 0.1em;
+      margin-top: 8px;
+    }
 
-  /* Radar score */
-  .radar-wrap {
-    position: relative;
-    width: 100%;
-    max-width: 380px;
-    aspect-ratio: 1;
-    margin-left: -8px;
-  }
-  .radar-wrap svg { width: 100%; height: 100%; overflow: visible; }
-  .radar-center {
-    position: absolute; inset: 0;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    text-align: center;
-    pointer-events: none;
-  }
-  .radar-value {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: clamp(72px, 11vw, 128px);
-    line-height: 0.9;
-    color: var(--ink-1);
-    letter-spacing: -0.04em;
-  }
-  .radar-value sup {
-    font-family: var(--mono);
-    font-style: normal;
-    font-size: 14px;
-    color: var(--orange);
-    vertical-align: top;
-    margin-left: 4px;
-    letter-spacing: 0;
-  }
-  .radar-label {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--ink-3);
-    letter-spacing: 0.24em;
-    margin-top: 12px;
-    text-transform: uppercase;
-  }
-  /* Floating annotation */
-  .radar-note {
-    position: absolute;
-    bottom: 8%;
-    right: -8%;
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--ink-3);
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    max-width: 120px;
-    line-height: 1.6;
-  }
-  .radar-note .bar {
-    display: block; width: 22px; height: 1px;
-    background: var(--orange);
-    margin-bottom: 8px;
-  }
+    /* ── Weight ── */
+    .weight-big {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 56px;
+      color: var(--ink-1);
+    }
+    .weight-meta {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--ink-2);
+      letter-spacing: 0.08em;
+      margin-top: 4px;
+      margin-bottom: 20px;
+    }
+    .chart-wrap { width: 100%; overflow: hidden; }
+    .chart-axis {
+      display: flex; justify-content: space-between;
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--ink-3);
+      margin-top: 8px;
+    }
 
-  /* Right column blocks */
-  .dev-side { display: flex; flex-direction: column; gap: 72px; }
+    /* ── Sleep/Energy legend ── */
+    .chart-legend {
+      display: flex; gap: 16px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--ink-2);
+      margin-bottom: 16px;
+    }
+    .legend-dot {
+      display: inline-block;
+      width: 20px; height: 2px;
+      vertical-align: middle;
+      margin-right: 4px;
+      border-radius: 1px;
+    }
 
-  /* Streak */
-  .streak {
-    display: flex; align-items: baseline; gap: 18px;
-  }
-  .streak-num {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: clamp(120px, 16vw, 200px);
-    line-height: 0.85;
-    color: var(--orange);
-    letter-spacing: -0.05em;
-    text-shadow: 0 0 60px rgba(255, 122, 47, 0.25);
-  }
-  .streak-text {
-    font-size: 13px;
-    color: var(--ink-2);
-    letter-spacing: 0.04em;
-    line-height: 1.5;
-    max-width: 140px;
-    padding-bottom: 14px;
-  }
+    /* ── Macro rows ── */
+    .macro-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .macro-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--ink-2);
+      width: 110px;
+      letter-spacing: 0.05em;
+    }
+    .macro-bar-wrap { flex: 1; height: 1px; background: var(--ink-4); position: relative; }
+    .macro-bar-dot {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--orange);
+    }
+    .macro-val {
+      font-family: var(--mono); font-size: 12px;
+      color: var(--ink-1); text-align: right; min-width: 50px;
+    }
 
-  /* Weight curve section */
-  .weight {
-    margin-top: 100px;
-    position: relative;
-  }
-  @media (max-width: 880px) { .weight { margin-top: 64px; } }
+    /* ── Today macros ── */
+    .today-kcal {
+      font-family: var(--serif); font-style: italic;
+      font-size: 64px; color: var(--ink-1);
+    }
+    .today-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .chip {
+      font-family: var(--mono); font-size: 10px;
+      color: var(--ink-2); background: var(--ink-4);
+      border-radius: 20px; padding: 4px 10px;
+    }
 
-  .weight-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 32px;
-    gap: 24px;
-    flex-wrap: wrap;
-  }
-  .weight-diff {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: clamp(48px, 7vw, 84px);
-    line-height: 0.9;
-    color: var(--ink-1);
-    letter-spacing: -0.035em;
-  }
-  .weight-diff .sign { color: var(--orange); }
-  .weight-diff .unit {
-    font-family: var(--mono);
-    font-style: normal;
-    font-size: 14px;
-    color: var(--ink-3);
-    letter-spacing: 0.1em;
-    margin-left: 8px;
-  }
-  .weight-caption {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--ink-3);
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    text-align: right;
-    line-height: 1.8;
-  }
-  .weight-chart {
-    width: 100%;
-    height: 200px;
-    position: relative;
-  }
-  .weight-chart svg { width: 100%; height: 100%; overflow: visible; }
-  .weight-axis {
-    display: flex; justify-content: space-between;
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--ink-3);
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    margin-top: 12px;
-  }
-  .weight-axis span:last-child { color: var(--ink-2); }
+    /* ── Footer ── */
+    .footer-text {
+      font-family: var(--mono); font-size: 10px;
+      color: var(--ink-3); letter-spacing: 0.1em;
+      text-align: center; padding: 32px 20px 16px;
+    }
 
-  /* Macro bars */
-  .macros { margin-top: 100px; }
-  @media (max-width: 880px) { .macros { margin-top: 72px; } }
+    /* ── Tab 02 Locked ── */
+    .locked-section { position: relative; }
+    .locked-overlay {
+      position: absolute; inset: 0;
+      background: rgba(10,10,10,0.85);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 12px; z-index: 10;
+    }
+    .locked-title { font-family: var(--sans); font-size: 15px; color: var(--ink-1); font-weight: 500; }
+    .locked-sub { font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing: 0.08em; }
+    .coaching-content { pointer-events: none; }
+    .tone-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+    .tone-card {
+      background: var(--ink-4); border-radius: 8px; padding: 12px 8px;
+      display: flex; flex-direction: column; gap: 4px;
+      cursor: pointer; border: 1px solid transparent;
+    }
+    .tone-card .num { font-family: var(--mono); font-size: 9px; color: var(--ink-3); }
+    .tone-card .name { font-family: var(--sans); font-size: 12px; color: var(--ink-1); }
+    .prox-w { display: flex; }
+    .prox-btn {
+      flex: 1; font-family: var(--mono); font-size: 10px; color: var(--ink-2);
+      background: var(--ink-4); border: none; padding: 8px 4px; cursor: pointer;
+    }
+    .focus-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+    .focus-pill {
+      font-family: var(--mono); font-size: 10px; color: var(--ink-2);
+      background: var(--ink-4); border-radius: 20px; padding: 6px 12px;
+    }
 
-  .macros-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 36px; }
-  .macros-head .eyebrow { font-size: 10px; }
-  .macros-head .scope { font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing: 0.18em; text-transform: uppercase; }
+    /* ── Tab 03 Profile ── */
+    .goal-btns { display: flex; gap: 8px; }
+    .goal-btn {
+      flex: 1; font-family: var(--mono); font-size: 11px;
+      letter-spacing: 0.06em; color: var(--ink-2);
+      background: var(--ink-4); border: 1px solid var(--ink-4);
+      border-radius: 8px; padding: 12px 8px; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .goal-btn.active { color: var(--orange); border-color: var(--orange); background: var(--orange-dim); }
 
-  .macro {
-    display: grid;
-    grid-template-columns: 90px 1fr 80px;
-    align-items: center;
-    gap: 24px;
-    padding: 18px 0;
-    border-top: 1px solid var(--line-soft);
-  }
-  .macro:last-child { border-bottom: 1px solid var(--line-soft); }
-  .macro-label {
-    font-family: var(--sans);
-    font-weight: 300;
-    font-size: 13px;
-    color: var(--ink-1);
-    letter-spacing: 0.04em;
-  }
-  .macro-bar {
-    height: 1px;
-    background: var(--line);
-    position: relative;
-  }
-  .macro-bar-fill {
-    position: absolute;
-    top: 0; left: 0;
-    height: 1px;
-    background: linear-gradient(90deg, var(--forest), var(--orange));
-    box-shadow: 0 0 12px rgba(255,122,47,0.4);
-    width: 0;
-    transition: width 1.8s var(--ease);
-  }
-  .macro-bar-fill::after {
-    content: "";
-    position: absolute;
-    right: -3px; top: -3px;
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--orange);
-    box-shadow: 0 0 12px var(--orange-glow);
-  }
-  .macro-val {
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--ink-2);
-    letter-spacing: 0.06em;
-    text-align: right;
-  }
-  .macro-val em {
-    font-style: normal;
-    color: var(--ink-1);
-    font-size: 14px;
-  }
+    .weight-input-wrap { display: flex; align-items: baseline; gap: 8px; }
+    #weight-input {
+      font-family: var(--serif); font-style: italic;
+      font-size: 88px; color: var(--ink-1);
+      background: none; border: none; outline: none;
+      width: 200px; line-height: 1;
+    }
+    .weight-unit { font-family: var(--mono); font-size: 14px; color: var(--ink-2); letter-spacing: 0.1em; }
+    .weight-delta { font-family: var(--mono); font-size: 11px; color: var(--orange); margin-top: 8px; }
 
-  /* ─── TAB 2: COACHING ───────────────────────────────────── */
+    .save-btn {
+      display: none; margin-top: 12px; width: 100%;
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em;
+      color: var(--black); background: var(--orange);
+      border: none; border-radius: 8px; padding: 12px; cursor: pointer;
+    }
+    .save-btn.visible { display: block; }
 
-  .section { margin-top: 80px; }
-  .section:first-of-type { margin-top: 56px; }
-  @media (max-width: 880px) { .section { margin-top: 64px; } .section:first-of-type { margin-top: 40px; } }
+    .day-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .day-btn {
+      width: 40px; height: 40px; border-radius: 50%;
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.05em;
+      color: var(--ink-3); background: var(--ink-4);
+      border: 1px solid var(--ink-4); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .day-btn.active { color: var(--orange); border-color: var(--orange); background: var(--orange-dim); }
 
-  /* Tonfall cards */
-  .tone-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin-top: 36px;
-  }
-  @media (max-width: 880px) {
-    .tone-grid { grid-template-columns: 1fr; }
-  }
-  .tone-card {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    padding: 28px 24px 26px;
-    cursor: pointer;
-    position: relative;
-    transition: all 0.5s var(--ease);
-    text-align: left;
-    color: var(--ink-1);
-    font-family: var(--sans);
-    overflow: hidden;
-  }
-  .tone-card::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at 50% -20%, var(--orange-dim), transparent 60%);
-    opacity: 0;
-    transition: opacity 0.6s var(--ease);
-    pointer-events: none;
-  }
-  .tone-card:hover::before { opacity: 0.6; }
-  .tone-card:hover {
-    border-color: rgba(255,122,47,0.25);
-    box-shadow: 0 0 40px rgba(255,122,47,0.08);
-  }
-  .tone-card.active {
-    border-color: var(--orange);
-    box-shadow: 0 0 0 1px var(--orange), 0 0 50px rgba(255,122,47,0.18);
-  }
-  .tone-card.active::before { opacity: 1; }
-  .tone-card .num {
-    font-family: var(--mono);
-    font-size: 9px;
-    color: var(--ink-3);
-    letter-spacing: 0.2em;
-    margin-bottom: 32px;
-    display: block;
-  }
-  .tone-card.active .num { color: var(--orange); }
-  .tone-card .name {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 32px;
-    line-height: 1;
-    letter-spacing: -0.02em;
-    margin-bottom: 18px;
-    display: block;
-  }
-  .tone-card .quote {
-    font-family: var(--sans);
-    font-weight: 300;
-    font-size: 13px;
-    color: var(--ink-2);
-    line-height: 1.55;
-    letter-spacing: 0.01em;
-    font-style: normal;
-    border-left: 1px solid var(--line);
-    padding-left: 14px;
-    margin-top: 8px;
-    min-height: 60px;
-  }
-  .tone-card.active .quote { color: var(--ink-1); border-left-color: var(--orange); }
+    .time-inputs { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+    .time-row {
+      display: flex; align-items: center; gap: 10px;
+      font-family: var(--mono); font-size: 11px; color: var(--ink-2);
+    }
+    .time-row label { width: 28px; }
+    .time-row input[type=time] {
+      background: var(--ink-4); border: 1px solid var(--ink-4);
+      border-radius: 6px; color: var(--ink-1);
+      font-family: var(--mono); font-size: 12px;
+      padding: 6px 10px; width: 110px;
+    }
+    .time-row input[type=time]:focus { outline: none; border-color: var(--orange); }
 
-  /* Proaktivität */
-  .prox-wrap { margin-top: 36px; }
-  .prox-track {
-    position: relative;
-    height: 1px;
-    background: var(--line);
-    margin: 60px 16px 50px;
-  }
-  .prox-point {
-    position: absolute;
-    top: 50%;
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    background: var(--black);
-    border: 1px solid var(--ink-4);
-    transform: translate(-50%, -50%);
-    cursor: pointer;
-    transition: all 0.4s var(--ease);
-  }
-  .prox-point:hover { border-color: var(--ink-2); }
-  .prox-point.active {
-    background: var(--orange);
-    border-color: var(--orange);
-    box-shadow: 0 0 0 6px rgba(255,122,47,0.12), 0 0 24px var(--orange-glow);
-    animation: prox-pulse 2.4s ease-in-out infinite;
-  }
-  @keyframes prox-pulse {
-    0%, 100% { box-shadow: 0 0 0 6px rgba(255,122,47,0.12), 0 0 24px rgba(255,122,47,0.35); }
-    50%      { box-shadow: 0 0 0 10px rgba(255,122,47,0.05), 0 0 36px rgba(255,122,47,0.5); }
-  }
-  .prox-label {
-    position: absolute;
-    top: 28px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--ink-3);
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    transition: color 0.4s var(--ease);
-  }
-  .prox-point.active .prox-label { color: var(--orange); }
-  .prox-meaning {
-    text-align: center;
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 20px;
-    color: var(--ink-2);
-    line-height: 1.4;
-    transition: opacity 0.4s var(--ease);
-    min-height: 32px;
-  }
+    .tags-wrap { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .tag {
+      display: flex; align-items: center; gap: 4px;
+      font-family: var(--mono); font-size: 10px; color: var(--ink-2);
+      background: var(--ink-4); border-radius: 20px; padding: 4px 10px;
+    }
+    .tag .tag-x { color: var(--ink-3); cursor: pointer; font-size: 14px; line-height: 1; margin-left: 2px; }
+    .tag .tag-x:hover { color: var(--orange); }
+    .tag-add-row { display: flex; gap: 8px; align-items: center; }
+    .tag-type-toggle {
+      font-family: var(--mono); font-size: 9px; color: var(--ink-3);
+      background: var(--ink-4); border: none; border-radius: 4px;
+      padding: 6px 8px; cursor: pointer; white-space: nowrap;
+    }
+    .tag-type-toggle.allergy { color: #E07070; }
+    .tag-input {
+      flex: 1; background: var(--ink-4); border: 1px solid var(--ink-4);
+      border-radius: 8px; color: var(--ink-1);
+      font-family: var(--mono); font-size: 11px; padding: 8px 12px;
+    }
+    .tag-input:focus { outline: none; border-color: var(--orange); }
 
-  /* Wochenfokus tags */
-  .focus-tags {
-    display: flex; flex-wrap: wrap; gap: 12px;
-    margin-top: 36px;
-  }
-  .pill {
-    border: 1px solid var(--line);
-    background: transparent;
-    color: var(--ink-2);
-    font-family: var(--sans);
-    font-weight: 300;
-    font-size: 13px;
-    padding: 12px 22px;
-    border-radius: 999px;
-    cursor: pointer;
-    transition: all 0.4s var(--ease);
-    letter-spacing: 0.01em;
-  }
-  .pill:hover { border-color: var(--ink-3); color: var(--ink-1); }
-  .pill.active {
-    background: var(--orange);
-    border-color: var(--orange);
-    color: var(--black);
-    box-shadow: 0 0 30px rgba(255,122,47,0.25);
-  }
+    /* ── Dialog ── */
+    #dialog-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(10,10,10,0.8); z-index: 200;
+      align-items: center; justify-content: center; padding: 24px;
+    }
+    #dialog-overlay.open { display: flex; }
+    .dialog {
+      background: var(--card); border-radius: 16px;
+      padding: 24px; width: 100%; max-width: 340px;
+    }
+    .dialog-title { font-family: var(--sans); font-size: 15px; color: var(--ink-1); font-weight: 500; margin-bottom: 8px; }
+    .dialog-body { font-family: var(--sans); font-size: 13px; color: var(--ink-2); margin-bottom: 20px; line-height: 1.5; }
+    .dialog-btns { display: flex; gap: 8px; }
+    .dialog-btns button { flex: 1; font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; padding: 12px; border-radius: 8px; cursor: pointer; border: none; }
+    .dialog-cancel { background: var(--ink-4); color: var(--ink-2); }
+    .dialog-confirm { background: var(--orange); color: var(--black); }
 
-  /* Language */
-  .lang-row { display: flex; gap: 18px; margin-top: 36px; align-items: center; }
-  .flag-btn {
-    background: var(--card);
-    border: 1px solid var(--line);
-    width: 64px; height: 44px;
-    border-radius: 4px;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    padding: 0;
-    transition: all 0.4s var(--ease);
-  }
-  .flag-btn:hover { border-color: var(--ink-3); }
-  .flag-btn.active {
-    border-color: var(--orange);
-    box-shadow: 0 0 0 1px var(--orange), 0 0 24px rgba(255,122,47,0.2);
-  }
-  .flag-btn svg { width: 100%; height: 100%; display: block; }
-  .flag-code {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--ink-3);
-    letter-spacing: 0.2em;
-    margin-left: 4px;
-    transition: color 0.4s var(--ease);
-  }
-  .flag-btn.active + .flag-code { color: var(--orange); }
-
-  /* Save link */
-  .save-link {
-    display: inline-block;
-    margin-top: 80px;
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 28px;
-    color: var(--orange);
-    text-decoration: none;
-    letter-spacing: -0.01em;
-    transition: all 0.4s var(--ease);
-    cursor: pointer;
-    background: none; border: none; padding: 0;
-  }
-  .save-link:hover { letter-spacing: 0.005em; text-shadow: 0 0 24px var(--orange-glow); }
-  .save-link .arrow { display: inline-block; transition: transform 0.4s var(--ease); font-style: normal; }
-  .save-link:hover .arrow { transform: translateX(8px); }
-
-  /* ─── TAB 3: PROFIL ─────────────────────────────────────── */
-
-  .profile-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-top: 56px;
-  }
-  @media (max-width: 880px) { .profile-grid { grid-template-columns: 1fr; margin-top: 40px; } }
-
-  .field-card {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    padding: 28px 26px;
-    position: relative;
-    transition: all 0.5s var(--ease);
-    overflow: hidden;
-  }
-  .field-card::before {
-    content: ""; position: absolute; inset: 0;
-    background: radial-gradient(circle at 100% 0%, var(--orange-dim), transparent 50%);
-    opacity: 0;
-    transition: opacity 0.6s var(--ease);
-    pointer-events: none;
-  }
-  .field-card:hover::before { opacity: 1; }
-  .field-card:hover { border-color: rgba(255,122,47,0.2); }
-  .field-card:hover .edit-icon { opacity: 1; }
-  .field-card.full { grid-column: 1 / -1; }
-  .field-card .ftitle {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--ink-3);
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    margin-bottom: 24px;
-    display: block;
-  }
-  .edit-icon {
-    position: absolute;
-    top: 24px; right: 22px;
-    width: 14px; height: 14px;
-    opacity: 0;
-    transition: opacity 0.3s var(--ease);
-    color: var(--orange);
-    cursor: pointer;
-  }
-  .edit-icon svg { width: 100%; height: 100%; }
-
-  /* Goal cards (inner) */
-  .goal-row {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-  }
-  @media (max-width: 540px) { .goal-row { grid-template-columns: 1fr; } }
-  .goal-opt {
-    background: var(--black);
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    padding: 16px 14px;
-    cursor: pointer;
-    font-family: var(--sans);
-    font-weight: 300;
-    color: var(--ink-2);
-    transition: all 0.4s var(--ease);
-    text-align: left;
-    position: relative;
-  }
-  .goal-opt:hover { border-color: var(--ink-3); color: var(--ink-1); }
-  .goal-opt.active {
-    border-color: var(--orange);
-    color: var(--ink-1);
-    background: rgba(255,122,47,0.05);
-    box-shadow: 0 0 0 1px var(--orange), 0 0 24px rgba(255,122,47,0.12);
-  }
-  .goal-opt .gnum {
-    font-family: var(--mono);
-    font-size: 9px;
-    color: var(--ink-3);
-    letter-spacing: 0.2em;
-    display: block;
-    margin-bottom: 12px;
-  }
-  .goal-opt.active .gnum { color: var(--orange); }
-  .goal-opt .gname {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 22px;
-    line-height: 1.1;
-    letter-spacing: -0.01em;
-  }
-
-  /* Weight number */
-  .weight-input {
-    display: flex;
-    align-items: baseline;
-    gap: 4px;
-    font-family: var(--serif);
-    font-style: italic;
-    color: var(--ink-1);
-  }
-  .weight-input .num {
-    font-size: 88px;
-    line-height: 0.9;
-    letter-spacing: -0.04em;
-    background: none; border: none;
-    color: inherit; font: inherit;
-    width: 160px;
-    outline: none;
-    padding: 0;
-    caret-color: var(--orange);
-    font-family: var(--serif);
-    font-style: italic;
-  }
-  .weight-input .unit {
-    font-family: var(--mono);
-    font-style: normal;
-    font-size: 13px;
-    color: var(--ink-3);
-    letter-spacing: 0.12em;
-  }
-  .weight-trend {
-    margin-top: 14px;
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--ink-3);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-  .weight-trend em { color: var(--orange); font-style: normal; }
-
-  /* Training days circles */
-  .days {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-  .day {
-    width: 38px; height: 38px;
-    border-radius: 50%;
-    border: 1px solid var(--line);
-    background: transparent;
-    color: var(--ink-3);
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    cursor: pointer;
-    transition: all 0.4s var(--ease);
-    display: inline-flex;
-    align-items: center; justify-content: center;
-    padding: 0;
-  }
-  .day:hover { border-color: var(--ink-3); color: var(--ink-2); }
-  .day.active {
-    background: var(--orange);
-    border-color: var(--orange);
-    color: var(--black);
-    box-shadow: 0 0 20px rgba(255,122,47,0.4);
-  }
-
-  /* Tag list (allergies + fridge) */
-  .tags {
-    display: flex; flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 4px;
-  }
-  .tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--black);
-    border: 1px solid var(--line);
-    color: var(--ink-1);
-    font-family: var(--sans);
-    font-weight: 300;
-    font-size: 13px;
-    padding: 8px 6px 8px 14px;
-    border-radius: 999px;
-    transition: all 0.3s var(--ease);
-  }
-  .tag:hover { border-color: var(--ink-3); }
-  .tag .x {
-    width: 18px; height: 18px;
-    border: none;
-    background: transparent;
-    color: var(--ink-3);
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center; justify-content: center;
-    border-radius: 50%;
-    padding: 0;
-    font-size: 14px;
-    line-height: 1;
-    transition: all 0.3s var(--ease);
-  }
-  .tag .x:hover { color: var(--orange); transform: rotate(90deg); }
-  .tag-add {
-    border: 1px dashed var(--ink-4);
-    background: transparent;
-    color: var(--ink-3);
-    cursor: pointer;
-    padding: 0 14px;
-    border-radius: 999px;
-    height: 34px;
-    font-family: var(--mono);
-    font-size: 13px;
-    letter-spacing: 0;
-    transition: all 0.3s var(--ease);
-    display: inline-flex; align-items: center; gap: 6px;
-  }
-  .tag-add:hover { border-color: var(--orange); color: var(--orange); }
-
-  /* Delete data */
-  .delete-data {
-    display: block;
-    margin-top: 120px;
-    text-align: left;
-    font-family: var(--mono);
-    font-size: 10px;
-    color: #333;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    background: none; border: none;
-    cursor: pointer;
-    transition: color 0.4s var(--ease);
-    padding: 0;
-  }
-  .delete-data:hover { color: var(--ink-3); }
-
-  /* ─── BOTTOM NAV (MOBILE) ────────────────────────────── */
-  .nav-bottom {
-    display: none;
-    position: fixed;
-    left: 0; right: 0; bottom: 0;
-    background: rgba(10,10,10,0.92);
-    backdrop-filter: blur(12px);
-    border-top: 1px solid var(--line);
-    z-index: 20;
-    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
-  }
-  .nav-bottom-inner {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 4px;
-  }
-  .nav-bottom .nav-item {
-    text-align: center;
-    padding: 12px 4px 8px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    font-size: 11px;
-  }
-  .nav-bottom .nav-item .idx {
-    margin-right: 0;
-    font-size: 9px;
-  }
-  .nav-bottom .nav-item.active::before {
-    left: 50%; top: -12px;
-    width: 24px;
-    transform: translateX(-50%);
-    animation: pulse-line-h 2.6s ease-in-out infinite;
-  }
-  @keyframes pulse-line-h {
-    0%, 100% { opacity: 0.45; width: 16px; }
-    50%      { opacity: 1;    width: 28px; }
-  }
-  @media (max-width: 880px) {
-    .nav-bottom { display: block; }
-  }
-
-  /* ─── FOOTER ────────────────────────────────────────────── */
-  .footer {
-    margin-top: 140px;
-    padding-top: 28px;
-    border-top: 1px solid var(--line);
-    font-family: var(--mono);
-    font-size: 10px;
-    color: #333;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-  }
-  @media (max-width: 880px) { .footer { margin-top: 80px; margin-bottom: 80px; } }
-
-  /* ─── BIG TAB TITLE ───────────────────────────────────── */
-  .panel-title {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 24px;
-    margin-bottom: 8px;
-  }
-  .panel-title h1 {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: clamp(40px, 6.5vw, 80px);
-    line-height: 0.95;
-    letter-spacing: -0.03em;
-    color: var(--ink-1);
-    font-weight: 400;
-  }
-  .panel-title .pno {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--orange);
-    letter-spacing: 0.24em;
-  }
-  .panel-sub {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--ink-3);
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-  }
-
-  /* Subtle entrance hook */
-  .stagger > * { opacity: 0; transform: translateY(8px); transition: opacity 0.7s var(--ease), transform 0.7s var(--ease); }
-  .panel.active .stagger > *:nth-child(1) { opacity: 1; transform: none; transition-delay: 0.05s; }
-  .panel.active .stagger > *:nth-child(2) { opacity: 1; transform: none; transition-delay: 0.12s; }
-  .panel.active .stagger > *:nth-child(3) { opacity: 1; transform: none; transition-delay: 0.2s; }
-  .panel.active .stagger > *:nth-child(4) { opacity: 1; transform: none; transition-delay: 0.28s; }
-  .panel.active .stagger > *:nth-child(5) { opacity: 1; transform: none; transition-delay: 0.36s; }
-  .panel.active .stagger > *:nth-child(6) { opacity: 1; transform: none; transition-delay: 0.44s; }
-</style>
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: 80px; left: 50%;
+      transform: translateX(-50%);
+      background: var(--card); border: 1px solid var(--orange);
+      border-radius: 8px; padding: 8px 16px;
+      font-family: var(--mono); font-size: 11px; color: var(--orange);
+      opacity: 0; transition: opacity 0.3s; z-index: 150; pointer-events: none;
+      white-space: nowrap;
+    }
+    #toast.show { opacity: 1; }
+  </style>
 </head>
 <body>
 
-<!-- ─── LOADING OVERLAY ────────────────────────────── -->
-<div id="loading-overlay" style="position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.4s ease;">
-  <div style="text-align:center;">
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" style="animation:spin 1.2s linear infinite;">
-      <circle cx="24" cy="24" r="20" stroke="#1F2C24" stroke-width="3"/>
-      <path d="M24 4 A20 20 0 0 1 44 24" stroke="#FF7A2F" stroke-width="3" stroke-linecap="round"/>
-    </svg>
-    <div style="font-family:-apple-system,sans-serif;font-size:13px;color:#636366;margin-top:16px;letter-spacing:.1em;text-transform:uppercase;">Laden…</div>
-  </div>
-</div>
-<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
-
-<!-- ─── ERROR SCREEN ───────────────────────────────── -->
-<div id="error-screen" style="display:none;position:fixed;inset:0;background:#000;align-items:center;justify-content:center;z-index:9998;">
-  <div style="text-align:center;padding:40px;">
-    <div style="font-family:-apple-system,sans-serif;font-size:22px;font-weight:600;color:#fff;margin-bottom:12px;">Link ungültig</div>
-    <div style="font-family:-apple-system,sans-serif;font-size:15px;color:#636366;max-width:320px;line-height:1.5;">Dieser Link ist abgelaufen oder ungültig. Schreib <strong style="color:#FF7A2F;">DASHBOARD</strong> in WhatsApp für einen neuen Link.</div>
-  </div>
+<!-- Loading -->
+<div id="loading">
+  <div class="logo">Clean Eats</div>
+  <div class="dot"></div>
 </div>
 
-<div class="ambient"><div class="amb-1"></div><div class="amb-2"></div></div>
-<div class="shell">
-  <!-- ── SIDEBAR ── -->
-  <nav class="nav-left" id="nav-left">
-    <div class="nav-logo">
-      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="16" cy="16" r="14" stroke="#FF7A2F" stroke-width="2"/>
-        <text x="16" y="21" text-anchor="middle" font-family="-apple-system,system-ui,sans-serif" font-weight="900" font-size="14" fill="#FF7A2F">CE</text>
-      </svg>
-      <span>Clean Eats</span>
+<!-- Error -->
+<div id="error-screen">
+  <p id="error-msg">Kein gültiger Link. Schreib DASHBOARD in WhatsApp.</p>
+</div>
+
+<!-- App -->
+<div id="app">
+
+  <!-- ══════════ TAB 01 — ENTWICKLUNG ══════════ -->
+  <div id="tab-1" class="tab-panel active">
+
+    <!-- Adherenz Arc -->
+    <div class="section" id="sec-arc">
+      <div id="arc-wrap">
+        <svg id="arc-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="seg-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <g id="arc-segs"></g>
+        </svg>
+        <div class="arc-center">
+          <div><span class="arc-num" id="arc-num">—</span><span class="arc-pct">%</span></div>
+          <div class="arc-label" id="arc-kw">ADHERENZ · KW —</div>
+        </div>
+      </div>
+      <div class="arc-days-note">
+        <span class="arc-days-line"></span><span id="arc-days-text">— VON 7 TAGEN<br>IM ZIEL</span>
+      </div>
     </div>
-    <div class="nav-links" id="nav-links">
-      <button class="nav-item active" data-tab="dev"><span class="idx">01</span>Meine Entwicklung</button>
-      <button class="nav-item" data-tab="coach"><span class="idx">02</span>Mein Coaching</button>
-      <button class="nav-item" data-tab="profile"><span class="idx">03</span>Mein Profil</button>
+
+    <!-- Streak -->
+    <div class="section">
+      <div class="streak-row">
+        <div class="streak-num" id="streak-num">—</div>
+        <div class="streak-label">Tage in Folge aktiv.</div>
+      </div>
     </div>
+
+    <!-- Meilenstein -->
+    <div class="section">
+      <div class="eyebrow">NÄCHSTER MEILENSTEIN</div>
+      <div class="streak-row" style="gap:8px">
+        <span class="milestone-num" id="milestone-diff">—</span>
+        <span class="milestone-text">Mahlzeiten</span>
+      </div>
+      <div class="milestone-sub" id="milestone-label">BIS MEILENSTEIN —</div>
+    </div>
+
+    <!-- Gewichtsverlauf -->
+    <div class="section">
+      <div class="eyebrow">GEWICHTSVERLAUF</div>
+      <div class="weight-big" id="weight-diff-display">— KG</div>
+      <div class="weight-meta" id="weight-meta">SEIT START</div>
+      <div class="chart-wrap">
+        <svg id="weight-chart" viewBox="0 0 400 120" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">
+          <defs>
+            <linearGradient id="weight-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#FF7A2F" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#FF7A2F" stop-opacity="0"/>
+            </linearGradient>
+            <filter id="line-glow" x="-10%" y="-40%" width="120%" height="180%">
+              <feGaussianBlur stdDeviation="2.5" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <g id="weight-chart-g"></g>
+        </svg>
+      </div>
+      <div class="chart-axis">
+        <span id="weight-axis-left">—</span>
+        <span id="weight-axis-right">HEUTE · — KG</span>
+      </div>
+    </div>
+
+    <!-- Schlaf & Energie -->
+    <div class="section">
+      <div class="eyebrow-row">
+        <span class="eyebrow">SCHLAF & ENERGIE</span>
+        <span class="eyebrow" id="sleep-avg-label">—</span>
+      </div>
+      <div class="chart-legend">
+        <span><span class="legend-dot" style="background:#5B9BD5"></span>Schlaf</span>
+        <span><span class="legend-dot" style="background:var(--orange)"></span>Energie</span>
+      </div>
+      <div class="chart-wrap">
+        <svg id="sleep-chart" viewBox="0 0 400 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">
+          <defs>
+            <filter id="sleep-glow" x="-10%" y="-40%" width="120%" height="180%">
+              <feGaussianBlur stdDeviation="2" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <g id="sleep-chart-g"></g>
+        </svg>
+      </div>
+      <div class="chart-axis">
+        <span id="sleep-axis-left">—</span>
+        <span id="sleep-axis-right">HEUTE</span>
+      </div>
+    </div>
+
+    <!-- Makro-Trend -->
+    <div class="section">
+      <div class="eyebrow-row">
+        <span class="eyebrow">MAKRO-TREND</span>
+        <span class="eyebrow">WOCHENØ</span>
+      </div>
+      <div id="macro-rows"></div>
+    </div>
+
+    <!-- Heute -->
+    <div class="section">
+      <div class="eyebrow-row">
+        <span class="eyebrow">HEUTE</span>
+        <span class="eyebrow" id="today-meal-count">BISHER 0 MAHLZEITEN</span>
+      </div>
+      <div class="today-kcal" id="today-kcal">— kcal</div>
+      <div class="today-chips" id="today-chips"></div>
+    </div>
+
+    <div class="footer-text">DEIN COACH IST IMMER AUF WHATSAPP.</div>
+  </div>
+
+  <!-- ══════════ TAB 02 — COACHING (gesperrt) ══════════ -->
+  <div id="tab-2" class="tab-panel">
+    <div class="locked-section" style="min-height:calc(100vh - 64px)">
+      <div class="coaching-content">
+        <div class="section">
+          <div class="eyebrow" id="coaching-heading">Wie soll dein Coach mit dir arbeiten?</div>
+          <div class="tone-grid">
+            <button class="tone-card active" data-tone="direkt">
+              <span class="num">01</span><span class="name">Direkt</span>
+              <div style="font-family:var(--mono);font-size:9px;color:var(--ink-3);margin-top:4px">"Hähnchen. Jetzt."</div>
+            </button>
+            <button class="tone-card" data-tone="motivierend">
+              <span class="num">02</span><span class="name">Motivierend</span>
+              <div style="font-family:var(--mono);font-size:9px;color:var(--ink-3);margin-top:4px">"Du schaffst das!"</div>
+            </button>
+            <button class="tone-card" data-tone="sachlich">
+              <span class="num">03</span><span class="name">Sachlich</span>
+              <div style="font-family:var(--mono);font-size:9px;color:var(--ink-3);margin-top:4px">"Daten first."</div>
+            </button>
+          </div>
+          <div class="eyebrow" style="margin-top:20px;margin-bottom:12px">PROAKTIVITÄT</div>
+          <div class="prox-w">
+            <button class="prox-btn">Wenig</button>
+            <button class="prox-btn">Normal</button>
+            <button class="prox-btn">Viel</button>
+          </div>
+          <div class="eyebrow" style="margin-top:20px;margin-bottom:12px">WOCHENFOKUS</div>
+          <div class="focus-pills">
+            <span class="focus-pill">Mehr Protein</span>
+            <span class="focus-pill">Trainingsernährung</span>
+            <span class="focus-pill">Regeneration</span>
+            <span class="focus-pill">Neue Gerichte</span>
+          </div>
+        </div>
+      </div>
+      <div class="locked-overlay">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#8A8A8A" stroke-width="1.5">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <div class="locked-title">Verfügbar nach dem Launch</div>
+        <div class="locked-sub">KOMMT MIT VERSION 1.0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ TAB 03 — PROFIL ══════════ -->
+  <div id="tab-3" class="tab-panel">
+    <div style="padding:20px;display:flex;flex-direction:column;gap:12px">
+
+      <!-- Card 1: Ziel -->
+      <div class="card">
+        <div class="card-title">ZIEL</div>
+        <div class="goal-btns">
+          <button class="goal-btn" id="goal-btn-fat" data-goal="fat_loss">ABNEHMEN</button>
+          <button class="goal-btn" id="goal-btn-perf" data-goal="performance">PERFORMANCE</button>
+        </div>
+      </div>
+
+      <!-- Card 2: Gewicht -->
+      <div class="card">
+        <div class="card-title">AKTUELLES GEWICHT</div>
+        <div class="weight-input-wrap">
+          <input type="number" id="weight-input" step="0.1" min="30" max="250" inputmode="decimal">
+          <span class="weight-unit">KG</span>
+        </div>
+        <div class="weight-delta" id="profile-weight-delta"></div>
+        <button class="save-btn" id="weight-save-btn">SPEICHERN</button>
+      </div>
+
+      <!-- Card 3: Trainingstage -->
+      <div class="card">
+        <div class="card-title">TRAININGSTAGE & ZEITEN</div>
+        <div class="day-btns" id="day-btns"></div>
+        <div class="time-inputs" id="time-inputs"></div>
+        <button class="save-btn visible" id="schedule-save-btn">SPEICHERN</button>
+      </div>
+
+      <!-- Card 4: Allergien & Dislikes -->
+      <div class="card">
+        <div class="card-title">ALLERGIEN & DISLIKES</div>
+        <div class="tags-wrap" id="allergy-dislike-tags"></div>
+        <div class="tag-add-row">
+          <button class="tag-type-toggle" id="tag-type-btn">DISLIKE</button>
+          <input class="tag-input" id="tag-input" type="text" placeholder="Hinzufügen…">
+        </div>
+      </div>
+
+      <!-- Card 5: Kühlschrank -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title">KÜHLSCHRANK · VORRÄTE</div>
+        <div class="tags-wrap" id="fridge-tags"></div>
+        <div class="tag-add-row">
+          <input class="tag-input" id="fridge-input" type="text" placeholder="Hinzufügen…">
+        </div>
+        <button class="save-btn visible" id="fridge-save-btn">SPEICHERN</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav id="bottom-nav">
+    <button class="nav-tab active" data-tab="1"><span class="num">01</span><span>ENTWICKLUNG</span></button>
+    <button class="nav-tab" data-tab="2"><span class="num">02</span><span>COACHING</span></button>
+    <button class="nav-tab" data-tab="3"><span class="num">03</span><span>PROFIL</span></button>
   </nav>
-
-  <!-- ── MAIN ── -->
-  <main class="main">
-
-    <!-- ── TAB 1 — DEV ── -->
-    <section class="panel active" id="panel-dev">
-      <header class="stagger">
-        <div class="panel-sub">Tab 01 · Diese Woche</div>
-        <div class="panel-title"><h1>Meine Entwicklung</h1></div>
-      </header>
-
-      <div class="dev-grid">
-        <!-- RADAR -->
-        <div class="reveal" data-delay="1">
-          <div class="radar-wrap">
-            <svg viewBox="0 0 400 400" id="radar-svg" aria-hidden="true">
-              <circle cx="200" cy="200" r="180" fill="none" stroke="#1F2C24" stroke-width="0.5" stroke-dasharray="2 6" opacity="0.5"></circle>
-              <circle cx="200" cy="200" r="155" fill="none" stroke="#1F2C24" stroke-width="0.5" opacity="0.5"></circle>
-              <circle cx="200" cy="200" r="130" fill="none" stroke="#1F2C24" stroke-width="0.5" stroke-dasharray="1 3" opacity="0.6"></circle>
-              <line x1="200" y1="20" x2="200" y2="50" stroke="#1F2C24" stroke-width="0.5"></line>
-              <line x1="200" y1="350" x2="200" y2="380" stroke="#1F2C24" stroke-width="0.5"></line>
-              <line x1="20" y1="200" x2="50" y2="200" stroke="#1F2C24" stroke-width="0.5"></line>
-              <line x1="350" y1="200" x2="380" y2="200" stroke="#1F2C24" stroke-width="0.5"></line>
-              <g id="radar-ticks"></g>
-              <g id="radar-arc"></g>
-            </svg>
-            <div class="radar-center">
-              <div class="radar-value"><span id="radar-num">0</span><sup>%</sup></div>
-              <div class="radar-label" id="radar-label">Adherenz</div>
-            </div>
-            <div class="radar-note" id="radar-note" style="color:rgb(255,122,47)">
-              <span class="bar"></span>— von 7 Tagen<br>im Ziel
-            </div>
-          </div>
-        </div>
-
-        <!-- STREAK + MEILENSTEIN -->
-        <div class="dev-side reveal" data-delay="3">
-          <div>
-            <div class="label-meta" style="margin-bottom:24px;">Streak</div>
-            <div class="streak">
-              <div class="streak-num" id="streak-num">0</div>
-              <div class="streak-text">Tage in Folge aktiv.</div>
-            </div>
-          </div>
-          <div>
-            <div class="label-meta" style="margin-bottom:16px;">Nächster Meilenstein</div>
-            <div id="milestone-block" style="font-family:var(--serif);font-style:italic;font-size:28px;letter-spacing:-0.015em;line-height:1.2;">
-              In <em style="color:var(--orange);font-style:italic" id="milestone-em">—</em><br>
-              <span style="color:var(--ink-3);font-size:14px;font-family:var(--mono);font-style:normal;letter-spacing:.18em;text-transform:uppercase;" id="milestone-sub">Meilenstein</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- GEWICHT -->
-      <div class="weight reveal" data-delay="2">
-        <div class="weight-head">
-          <div>
-            <div class="eyebrow" style="margin-bottom:14px;">Gewichtsverlauf</div>
-            <div class="weight-diff">
-              <span class="sign" id="weight-diff-sign">−</span><span id="weight-diff-num">0</span><span class="unit">KG</span>
-            </div>
-          </div>
-          <div class="weight-caption" id="weight-caption">Seit Start</div>
-        </div>
-        <div class="weight-chart">
-          <svg viewBox="0 0 800 200" preserveAspectRatio="none" id="weight-svg">
-            <defs>
-              <linearGradient id="weight-grad" x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0%" stop-color="#1F2C24"></stop>
-                <stop offset="55%" stop-color="#FF7A2F" stop-opacity="0.55"></stop>
-                <stop offset="100%" stop-color="#FF7A2F"></stop>
-              </linearGradient>
-              <filter id="weight-glow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="4" result="b"></feGaussianBlur>
-                <feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
-              </filter>
-            </defs>
-            <path id="weight-glow-path" d="" fill="none" stroke="#FF7A2F" stroke-width="6" stroke-opacity="0.18" filter="url(#weight-glow)"></path>
-            <path id="weight-path" d="" fill="none" stroke="url(#weight-grad)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-            <circle id="weight-end" cx="0" cy="0" r="4" fill="#FF7A2F"></circle>
-            <circle id="weight-end-halo" cx="0" cy="0" r="10" fill="none" stroke="#FF7A2F" stroke-opacity="0.3"></circle>
-          </svg>
-        </div>
-        <div class="weight-axis">
-          <span id="weight-axis-start">—</span>
-          <span id="weight-axis-end">Heute</span>
-        </div>
-      </div>
-
-      <!-- SCHLAF & ENERGIE -->
-      <div class="weight reveal" data-delay="3">
-        <div class="weight-head">
-          <div>
-            <div class="eyebrow" style="margin-bottom:14px;">Schlaf &amp; Energie</div>
-            <div style="display:flex;gap:20px;align-items:center;margin-top:8px;">
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span style="width:20px;height:2px;background:#5AC8FA;display:inline-block;border-radius:2px;"></span>
-                <span style="font-size:11px;color:var(--ink-2);font-family:var(--mono);letter-spacing:.14em;text-transform:uppercase;">Schlaf</span>
-              </div>
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span style="width:20px;height:2px;background:#FF7A2F;display:inline-block;border-radius:2px;"></span>
-                <span style="font-size:11px;color:var(--ink-2);font-family:var(--mono);letter-spacing:.14em;text-transform:uppercase;">Energie</span>
-              </div>
-            </div>
-          </div>
-          <div class="weight-caption" id="sleep-caption">Ø Schlaf &amp; Energie</div>
-        </div>
-        <div class="weight-chart">
-          <svg viewBox="0 0 800 200" preserveAspectRatio="none" id="sleep-svg">
-            <defs>
-              <linearGradient id="sleep-grad" x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0%" stop-color="#0A1A2A"></stop>
-                <stop offset="100%" stop-color="#5AC8FA"></stop>
-              </linearGradient>
-              <linearGradient id="energy-grad2" x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0%" stop-color="#1F2C24"></stop>
-                <stop offset="55%" stop-color="#FF7A2F" stop-opacity="0.55"></stop>
-                <stop offset="100%" stop-color="#FF7A2F"></stop>
-              </linearGradient>
-              <filter id="sleep-glow-f" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="3" result="b"></feGaussianBlur>
-                <feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
-              </filter>
-            </defs>
-            <path id="sleep-glow-path" d="" fill="none" stroke="#5AC8FA" stroke-width="6" stroke-opacity="0.15" filter="url(#sleep-glow-f)"></path>
-            <path id="sleep-path" d="" fill="none" stroke="url(#sleep-grad)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-            <path id="energy-glow-path" d="" fill="none" stroke="#FF7A2F" stroke-width="6" stroke-opacity="0.15" filter="url(#sleep-glow-f)"></path>
-            <path id="energy-path" d="" fill="none" stroke="url(#energy-grad2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-            <circle id="sleep-end" cx="0" cy="0" r="4" fill="#5AC8FA"></circle>
-            <circle id="sleep-end-halo" cx="0" cy="0" r="10" fill="none" stroke="#5AC8FA" stroke-opacity="0.25"></circle>
-            <circle id="energy-end" cx="0" cy="0" r="4" fill="#FF7A2F"></circle>
-            <circle id="energy-end-halo" cx="0" cy="0" r="10" fill="none" stroke="#FF7A2F" stroke-opacity="0.25"></circle>
-          </svg>
-        </div>
-        <div class="weight-axis">
-          <span id="sleep-axis-start">—</span>
-          <span id="sleep-axis-end">Heute</span>
-        </div>
-      </div>
-
-      <!-- MAKROS -->
-      <div class="macros reveal" data-delay="2">
-        <div class="macros-head">
-          <div class="eyebrow">Makro-Trend</div>
-          <div class="scope">Wochenø</div>
-        </div>
-        <div class="macro" id="macro-protein" data-width="0">
-          <div class="macro-label">Protein</div>
-          <div class="macro-bar"><div class="macro-bar-fill"></div></div>
-          <div class="macro-val"><em id="macro-protein-val">—</em>g</div>
-        </div>
-        <div class="macro" id="macro-carbs" data-width="0">
-          <div class="macro-label">Kohlenhydrate</div>
-          <div class="macro-bar"><div class="macro-bar-fill"></div></div>
-          <div class="macro-val"><em id="macro-carbs-val">—</em>g</div>
-        </div>
-        <div class="macro" id="macro-fat" data-width="0">
-          <div class="macro-label">Fett</div>
-          <div class="macro-bar"><div class="macro-bar-fill"></div></div>
-          <div class="macro-val"><em id="macro-fat-val">—</em>g</div>
-        </div>
-      </div>
-
-      <div class="footer">Dein Coach ist immer auf WhatsApp.</div>
-    </section>
-
-    <!-- ── TAB 2 — COACHING ── -->
-    <section class="panel" id="panel-coach">
-      <header class="stagger">
-        <div class="panel-sub">Tab 02 · Personalisierung</div>
-        <div class="panel-title"><h1>Mein Coaching</h1></div>
-        <p class="whisper" style="margin-top:48px;max-width:680px;">
-          Wie soll <em id="coach-name-display">dein Coach</em> mit dir arbeiten?
-        </p>
-      </header>
-
-      <!-- TONFALL -->
-      <div class="section">
-        <div class="eyebrow">Tonfall</div>
-        <div class="tone-grid" id="tone-grid">
-          <button class="tone-card active" data-tone="direkt">
-            <span class="num">01</span>
-            <span class="name">Direkt</span>
-            <div class="quote">"Hähnchen. Jetzt. Kein Diskutieren."</div>
-          </button>
-          <button class="tone-card" data-tone="motivierend">
-            <span class="num">02</span>
-            <span class="name">Motivierend</span>
-            <div class="quote">"Du schaffst das. Heute Abend: Hähnchen mit Reis – dein Körper wird es dir danken."</div>
-          </button>
-          <button class="tone-card" data-tone="sachlich">
-            <span class="num">03</span>
-            <span class="name">Sachlich</span>
-            <div class="quote">"Empfehlung: 180g Hähnchenbrust, 150g Reis. Passt zu deinem Ziel."</div>
-          </button>
-        </div>
-      </div>
-
-      <!-- PROAKTIVITÄT -->
-      <div class="section">
-        <div class="eyebrow">Proaktivität</div>
-        <div class="prox-wrap">
-          <div class="prox-track" id="prox-track">
-            <div class="prox-point" style="left:0%;" data-prox="wenig" data-meaning="Das System meldet sich nur, wenn du fragst.">
-              <span class="prox-label">Wenig</span>
-            </div>
-            <div class="prox-point active" style="left:50%;" data-prox="normal" data-meaning="Das System meldet sich 1× täglich.">
-              <span class="prox-label">Normal</span>
-            </div>
-            <div class="prox-point" style="left:100%;" data-prox="viel" data-meaning="Das System begleitet jede Mahlzeit &amp; jedes Training.">
-              <span class="prox-label">Viel</span>
-            </div>
-          </div>
-          <div class="prox-meaning" id="prox-meaning">Das System meldet sich 1× täglich.</div>
-        </div>
-      </div>
-
-      <!-- WOCHENFOKUS -->
-      <div class="section">
-        <div class="eyebrow">Wochenfokus</div>
-        <div class="focus-tags" id="focus-tags">
-          <button class="pill" data-focus="protein">Mehr Protein</button>
-          <button class="pill" data-focus="training">Trainingsernährung</button>
-          <button class="pill" data-focus="regeneration">Regeneration</button>
-          <button class="pill" data-focus="neue_gerichte">Neue Gerichte</button>
-        </div>
-      </div>
-
-      <button class="save-link" id="save-btn">Änderungen speichern <span class="arrow">→</span></button>
-      <div class="footer">Dein Coach ist immer auf WhatsApp.</div>
-    </section>
-
-    <!-- ── TAB 3 — PROFIL ── -->
-    <section class="panel" id="panel-profile">
-      <header class="stagger">
-        <div class="panel-sub">Tab 03 · Deine Daten</div>
-        <div class="panel-title"><h1>Mein Profil</h1></div>
-      </header>
-
-      <div class="profile-grid">
-        <!-- ZIEL -->
-        <div class="field-card full">
-          <span class="ftitle">Ziel</span>
-          <div class="goal-row" id="goal-row">
-            <button class="goal-opt" data-goal="fat_loss">
-              <span class="gnum">01</span><span class="gname">Abnehmen</span>
-            </button>
-            <button class="goal-opt" data-goal="performance">
-              <span class="gnum">02</span><span class="gname">Performance</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- GEWICHT -->
-        <div class="field-card">
-          <span class="ftitle">Aktuelles Gewicht</span>
-          <div class="edit-icon">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
-              <path d="M2 14 L2 11 L11 2 L14 5 L5 14 Z"></path>
-            </svg>
-          </div>
-          <div class="weight-input">
-            <input class="num" type="text" inputmode="decimal" value="—" id="weight-val">
-            <span class="unit">KG</span>
-          </div>
-          <div class="weight-trend" id="weight-trend">— kg <em>seit Start</em></div>
-        </div>
-
-        <!-- TRAINING -->
-        <div class="field-card">
-          <span class="ftitle">Trainingstage</span>
-          <div class="edit-icon">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
-              <path d="M2 14 L2 11 L11 2 L14 5 L5 14 Z"></path>
-            </svg>
-          </div>
-          <div class="days" id="days">
-            <button class="day" data-day="mo">MO</button>
-            <button class="day" data-day="di">DI</button>
-            <button class="day" data-day="mi">MI</button>
-            <button class="day" data-day="do">DO</button>
-            <button class="day" data-day="fr">FR</button>
-            <button class="day" data-day="sa">SA</button>
-            <button class="day" data-day="so">SO</button>
-          </div>
-        </div>
-
-        <!-- ALLERGIEN & DISLIKES -->
-        <div class="field-card full">
-          <span class="ftitle">Allergien &amp; Dislikes</span>
-          <div class="tags" id="allergies"></div>
-        </div>
-
-        <!-- KÜHLSCHRANK -->
-        <div class="field-card full">
-          <span class="ftitle">Kühlschrank · Vorräte</span>
-          <div class="tags" id="fridge"></div>
-        </div>
-      </div>
-
-      <button class="delete-data">Daten löschen</button>
-      <div class="footer">Dein Coach ist immer auf WhatsApp.</div>
-    </section>
-
-  </main>
 </div>
 
-<!-- ─── BOTTOM NAV (mobile) ─────────────────────────── -->
-<nav class="nav-bottom">
-  <div class="nav-bottom-inner" id="nav-mobile">
-    <button class="nav-item active" data-tab="dev"><span class="idx">01</span>Entwicklung</button>
-    <button class="nav-item" data-tab="coach"><span class="idx">02</span>Coaching</button>
-    <button class="nav-item" data-tab="profile"><span class="idx">03</span>Profil</button>
+<!-- Confirm Dialog -->
+<div id="dialog-overlay">
+  <div class="dialog">
+    <div class="dialog-title" id="dialog-title"></div>
+    <div class="dialog-body" id="dialog-body"></div>
+    <div class="dialog-btns">
+      <button class="dialog-cancel" id="dialog-cancel">Abbrechen</button>
+      <button class="dialog-confirm" id="dialog-confirm">Ja, ändern</button>
+    </div>
   </div>
-</nav>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
 
 <script>
-// ─── CONFIG ──────────────────────────────────────────
+'use strict';
+
 const API_BASE = 'https://clean-eats-v1.vercel.app';
-const params   = new URLSearchParams(location.search);
-const uid      = params.get('uid');
-const token    = params.get('token');
 
-// ─── TAB SWITCHING ───────────────────────────────────
-const tabs   = ['dev', 'coach', 'profile'];
-const panels = {
-  dev:     document.getElementById('panel-dev'),
-  coach:   document.getElementById('panel-coach'),
-  profile: document.getElementById('panel-profile'),
-};
-const navBtns = document.querySelectorAll('.nav-item');
+// ── Helpers ───────────────────────────────────────────────────────────────
 
-function switchTab(name) {
-  tabs.forEach(t => panels[t].classList.toggle('active', t === name));
-  navBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === name));
-  document.querySelectorAll('.panel.active .reveal').forEach(el => {
-    el.classList.remove('in');
-    requestAnimationFrame(() => observer.observe(el));
+function deFixed(n, digits) {
+  return Number(n).toFixed(digits === undefined ? 1 : digits).replace('.', ',');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg || '✓';
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2200);
+}
+
+function showError(msg) {
+  document.getElementById('loading').style.display = 'none';
+  var es = document.getElementById('error-screen');
+  es.style.display = 'flex';
+  document.getElementById('error-msg').textContent = msg;
+}
+
+// ── Tab navigation ────────────────────────────────────────────────────────
+
+document.querySelectorAll('.nav-tab').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.nav-tab').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
   });
-  if (name === 'dev') setTimeout(runDevAnimations, 100);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-navBtns.forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+});
 
-// ─── REVEAL ON SCROLL ────────────────────────────────
-const observer = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if (e.isIntersecting) { e.target.classList.add('in'); observer.unobserve(e.target); }
-  });
-}, { threshold: 0.18 });
-document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+// ── Dialog ────────────────────────────────────────────────────────────────
 
-// ─── COUNT-UP ────────────────────────────────────────
-function countUp(el, target, duration = 1600, suffix = '') {
-  const start = performance.now();
-  function tick(now) {
-    const t      = Math.min(1, (now - start) / duration);
-    const eased  = 1 - Math.pow(1 - t, 3);
-    const v      = Math.round(eased * target);
-    el.textContent = v + suffix;
-    if (t < 1) requestAnimationFrame(tick);
-    else el.textContent = target + suffix;
-  }
-  requestAnimationFrame(tick);
-}
+var _dialogResolve = null;
 
-// ─── RADAR ───────────────────────────────────────────
-function buildRadar(scorePct) {
-  const cx = 200, cy = 200, r = 168;
-  const arc   = document.getElementById('radar-arc');
-  const ticks = document.getElementById('radar-ticks');
-  arc.innerHTML = ''; ticks.innerHTML = '';
-  for (let i = 0; i < 60; i++) {
-    const a = (i / 60) * Math.PI * 2 - Math.PI / 2;
-    const r1 = 188, r2 = i % 5 === 0 ? 196 : 192;
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', cx + Math.cos(a) * r1); line.setAttribute('y1', cy + Math.sin(a) * r1);
-    line.setAttribute('x2', cx + Math.cos(a) * r2); line.setAttribute('y2', cy + Math.sin(a) * r2);
-    line.setAttribute('stroke', i % 5 === 0 ? '#2A3A30' : '#1F2C24');
-    line.setAttribute('stroke-width', '0.6');
-    ticks.appendChild(line);
-  }
-  const totalSegs   = 28;
-  const activeSegs  = Math.round((scorePct / 100) * totalSegs);
-  const startAngle  = -Math.PI / 2;
-  const sweep       = Math.PI * 1.6;
-  for (let i = 0; i < totalSegs; i++) {
-    const segLen = sweep / totalSegs;
-    const a0 = startAngle + i * segLen + segLen * 0.15;
-    const a1 = startAngle + (i + 1) * segLen - segLen * 0.15;
-    const x0 = cx + Math.cos(a0) * r, y0 = cy + Math.sin(a0) * r;
-    const x1 = cx + Math.cos(a1) * r, y1 = cy + Math.sin(a1) * r;
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', `M ${x0} ${y0} A ${r} ${r} 0 0 1 ${x1} ${y1}`);
-    if (i < activeSegs) {
-      path.setAttribute('stroke', '#FF7A2F');
-      path.setAttribute('stroke-width', i > activeSegs - 4 ? '4' : '2.5');
-      path.setAttribute('opacity', '0');
-      path.style.transition = `opacity 0.5s ease ${i * 35}ms`;
-      if (i > activeSegs - 4) path.setAttribute('filter', 'drop-shadow(0 0 6px rgba(255,122,47,0.7))');
-      requestAnimationFrame(() => path.setAttribute('opacity', '1'));
-    } else {
-      path.setAttribute('stroke', '#1F2C24');
-      path.setAttribute('stroke-width', '1.5');
-    }
-    path.setAttribute('stroke-linecap', 'round');
-    path.setAttribute('fill', 'none');
-    arc.appendChild(path);
-  }
-}
-
-// ─── CURVES ──────────────────────────────────────────
-function buildCurveD(pts, w, h, padL, padR, padT, padB) {
-  const min = Math.min(...pts) - 0.3, max = Math.max(...pts) + 0.3;
-  const xs = pts.map((_, j) => padL + (j / (pts.length - 1)) * (w - padL - padR));
-  const ys = pts.map(v => padT + (1 - (v - min) / (max - min)) * (h - padT - padB));
-  let d = 'M ' + xs[0] + ' ' + ys[0];
-  for (let k = 1; k < pts.length; k++) {
-    const cpx = xs[k-1] + (xs[k] - xs[k-1]) / 2;
-    d += ' C ' + cpx + ' ' + ys[k-1] + ', ' + cpx + ' ' + ys[k] + ', ' + xs[k] + ' ' + ys[k];
-  }
-  return { d, lx: xs[pts.length - 1], ly: ys[pts.length - 1] };
-}
-
-function buildWeightCurve(weightHistory) {
-  const pts = weightHistory.map(w => w.kg);
-  if (pts.length < 2) return;
-  const w = 800, h = 200, padL = 20, padR = 20, padT = 30, padB = 30;
-  const xs = pts.map((_, i) => padL + (i / (pts.length - 1)) * (w - padL - padR));
-  const min = Math.min(...pts), max = Math.max(...pts);
-  const ys = pts.map(v => padT + (1 - (v - min) / (max - min + 0.001)) * (h - padT - padB));
-  let d = `M ${xs[0]} ${ys[0]}`;
-  for (let i = 1; i < pts.length; i++) {
-    const cp1x = xs[i-1] + (xs[i] - xs[i-1]) / 2;
-    d += ` C ${cp1x} ${ys[i-1]}, ${cp1x} ${ys[i]}, ${xs[i]} ${ys[i]}`;
-  }
-  const path = document.getElementById('weight-path');
-  const glow = document.getElementById('weight-glow-path');
-  path.setAttribute('d', d); glow.setAttribute('d', d);
-  const len = path.getTotalLength();
-  path.style.strokeDasharray = len; path.style.strokeDashoffset = len;
-  glow.style.strokeDasharray = len; glow.style.strokeDashoffset = len;
-  requestAnimationFrame(() => {
-    path.style.transition = 'stroke-dashoffset 2.2s ease';
-    glow.style.transition = 'stroke-dashoffset 2.2s ease';
-    path.style.strokeDashoffset = 0; glow.style.strokeDashoffset = 0;
-  });
-  const end = document.getElementById('weight-end');
-  const halo = document.getElementById('weight-end-halo');
-  end.setAttribute('cx', xs[xs.length-1]); end.setAttribute('cy', ys[ys.length-1]);
-  halo.setAttribute('cx', xs[xs.length-1]); halo.setAttribute('cy', ys[ys.length-1]);
-  end.style.opacity = '0'; halo.style.opacity = '0';
-  setTimeout(() => {
-    end.style.transition = 'opacity 0.6s ease'; halo.style.transition = 'opacity 0.6s ease';
-    end.style.opacity = '1'; halo.style.opacity = '1';
-  }, 2000);
-}
-
-function buildSleepEnergyCurve(sleepEnergy) {
-  const sleepPts  = sleepEnergy.map(e => e.sleep);
-  const energyPts = sleepEnergy.map(e => e.energy);
-  if (sleepPts.length < 2) return;
-  const { d: sd, lx: slx, ly: sly } = buildCurveD(sleepPts,  800, 200, 20, 20, 30, 30);
-  const { d: ed, lx: elx, ly: ely } = buildCurveD(energyPts, 800, 200, 20, 20, 30, 30);
-  ['sleep-path','sleep-glow-path'].forEach(id => document.getElementById(id).setAttribute('d', sd));
-  ['sleep-end','sleep-end-halo'].forEach(id => { document.getElementById(id).setAttribute('cx', slx); document.getElementById(id).setAttribute('cy', sly); });
-  ['energy-path','energy-glow-path'].forEach(id => document.getElementById(id).setAttribute('d', ed));
-  ['energy-end','energy-end-halo'].forEach(id => { document.getElementById(id).setAttribute('cx', elx); document.getElementById(id).setAttribute('cy', ely); });
-}
-
-function animateMacros() {
-  document.querySelectorAll('.macro').forEach((m, i) => {
-    const fill = m.querySelector('.macro-bar-fill');
-    const w = m.dataset.width;
-    fill.style.width = '0%';
-    setTimeout(() => { fill.style.width = w + '%'; }, 600 + i * 150);
+function openDialog(title, body) {
+  return new Promise(function(resolve) {
+    _dialogResolve = resolve;
+    document.getElementById('dialog-title').textContent = title;
+    document.getElementById('dialog-body').textContent = body;
+    document.getElementById('dialog-overlay').classList.add('open');
   });
 }
 
-// ─── DEV ANIMATIONS ──────────────────────────────────
-let _devData = null;
-function runDevAnimations() {
-  if (!_devData) return;
-  buildRadar(_devData.adherenz_pct);
-  countUp(document.getElementById('radar-num'), _devData.adherenz_pct, 1800);
-  countUp(document.getElementById('streak-num'), _devData.streak, 1500);
-  if (_devData.weight_diff != null && Number.isFinite(_devData.weight_diff) && _devData.weight_diff !== 0) {
-    const absD = Math.abs(_devData.weight_diff);
-    countUp(document.getElementById('weight-diff-num'), Math.round(absD), 1400);
-    setTimeout(() => {
-      document.getElementById('weight-diff-num').textContent = absD.toFixed(1).replace('.', ',');
-    }, 1450);
-    document.getElementById('weight-diff-sign').textContent = _devData.weight_diff > 0 ? '−' : '+';
+document.getElementById('dialog-cancel').addEventListener('click', function() {
+  document.getElementById('dialog-overlay').classList.remove('open');
+  if (_dialogResolve) { _dialogResolve(false); _dialogResolve = null; }
+});
+document.getElementById('dialog-confirm').addEventListener('click', function() {
+  document.getElementById('dialog-overlay').classList.remove('open');
+  if (_dialogResolve) { _dialogResolve(true); _dialogResolve = null; }
+});
+
+// ── PATCH helper ──────────────────────────────────────────────────────────
+
+function patch(body) {
+  return fetch(API_BASE + '/api/dashboard-update', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }).then(function(r) { return r.json(); });
+}
+
+// ── Arc (28 Segmente) ─────────────────────────────────────────────────────
+
+function buildArc(pct) {
+  var CX = 200, CY = 200, R = 168, N = 28;
+  var sweep = pct >= 100 ? Math.PI * 2 : Math.PI * 1.6;
+  var startAngle = -Math.PI / 2 - sweep / 2;
+  var gapRad = 0.04;
+  var activeCount = Math.round((pct / 100) * N);
+  var g = document.getElementById('arc-segs');
+  g.innerHTML = '';
+
+  for (var i = 0; i < N; i++) {
+    var a0 = startAngle + (sweep / N) * i + gapRad / 2;
+    var a1 = startAngle + (sweep / N) * (i + 1) - gapRad / 2;
+    var isActive = i < activeCount;
+    var isLast3  = isActive && i >= activeCount - 3;
+    var rOuter = isLast3 ? R + 6  : R;
+    var rInner = isLast3 ? R - 20 : R - 14;
+
+    var x0o = CX + rOuter * Math.cos(a0), y0o = CY + rOuter * Math.sin(a0);
+    var x1o = CX + rOuter * Math.cos(a1), y1o = CY + rOuter * Math.sin(a1);
+    var x0i = CX + rInner * Math.cos(a1), y0i = CY + rInner * Math.sin(a1);
+    var x1i = CX + rInner * Math.cos(a0), y1i = CY + rInner * Math.sin(a0);
+
+    var largeArc = (a1 - a0) > Math.PI ? 1 : 0;
+    var d = 'M ' + x0o + ' ' + y0o +
+            ' A ' + rOuter + ' ' + rOuter + ' 0 ' + largeArc + ' 1 ' + x1o + ' ' + y1o +
+            ' L ' + x0i + ' ' + y0i +
+            ' A ' + rInner + ' ' + rInner + ' 0 ' + largeArc + ' 0 ' + x1i + ' ' + y1i + ' Z';
+
+    var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('fill', isActive ? '#FF7A2F' : '#1F2C24');
+    if (isLast3) path.setAttribute('filter', 'url(#seg-glow)');
+    g.appendChild(path);
   }
-  if (_devData.weight_history.length > 1) buildWeightCurve(_devData.weight_history);
-  if (_devData.sleep_energy.length > 1) buildSleepEnergyCurve(_devData.sleep_energy);
-  animateMacros();
-}
-setTimeout(runDevAnimations, 350);
-
-// ─── FORMAT DATE ─────────────────────────────────────
-function fmtDate(isoDate) {
-  if (!isoDate) return '—';
-  const [y, m, d] = isoDate.split('-');
-  const months = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
-  return `${parseInt(d, 10)}. ${months[parseInt(m, 10) - 1]}`;
 }
 
-// ─── POPULATE ────────────────────────────────────────
-function populate(d) {
-  _devData = d;
+// ── Smooth cubic bezier path ──────────────────────────────────────────────
 
-  // Radar label + note
-  document.getElementById('radar-label').textContent = `Adherenz · KW ${d.kw}`;
-  document.getElementById('radar-note').innerHTML =
-    `<span class="bar"></span>${d.active_days_7} von 7 Tagen<br>im Ziel`;
+function smoothPath(pts) {
+  if (pts.length < 2) return '';
+  var d = 'M ' + pts[0].x + ' ' + pts[0].y;
+  for (var i = 1; i < pts.length; i++) {
+    var prev = pts[i - 1], curr = pts[i];
+    var cpx = (prev.x + curr.x) / 2;
+    d += ' C ' + cpx + ' ' + prev.y + ' ' + cpx + ' ' + curr.y + ' ' + curr.x + ' ' + curr.y;
+  }
+  return d;
+}
+
+// ── Weight chart ──────────────────────────────────────────────────────────
+
+function buildWeightChart(data) {
+  var g = document.getElementById('weight-chart-g');
+  g.innerHTML = '';
+  if (!data || data.length < 2) {
+    var txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    txt.setAttribute('x', '200'); txt.setAttribute('y', '60');
+    txt.setAttribute('text-anchor', 'middle');
+    txt.setAttribute('fill', '#545454');
+    txt.setAttribute('font-family', 'JetBrains Mono');
+    txt.setAttribute('font-size', '11');
+    txt.textContent = 'Noch keine Daten.';
+    g.appendChild(txt);
+    return;
+  }
+  var W = 400, H = 120, PAD = 16;
+  var kgs = data.map(function(d) { return d.kg; });
+  var minKg = Math.min.apply(null, kgs), maxKg = Math.max.apply(null, kgs);
+  var range = maxKg - minKg || 1;
+
+  var pts = data.map(function(d, i) {
+    return {
+      x: PAD + (i / (data.length - 1)) * (W - PAD * 2),
+      y: H - PAD - ((d.kg - minKg) / range) * (H - PAD * 2),
+    };
+  });
+
+  var linePath = smoothPath(pts);
+
+  var fillPath = linePath + ' L ' + pts[pts.length-1].x + ' ' + H + ' L ' + pts[0].x + ' ' + H + ' Z';
+  var fillEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  fillEl.setAttribute('d', fillPath);
+  fillEl.setAttribute('fill', 'url(#weight-grad)');
+  g.appendChild(fillEl);
+
+  var glowLine = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  glowLine.setAttribute('d', linePath); glowLine.setAttribute('fill', 'none');
+  glowLine.setAttribute('stroke', '#FF7A2F'); glowLine.setAttribute('stroke-width', '2.5');
+  glowLine.setAttribute('filter', 'url(#line-glow)');
+  g.appendChild(glowLine);
+
+  var line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  line.setAttribute('d', linePath); line.setAttribute('fill', 'none');
+  line.setAttribute('stroke', '#FF7A2F'); line.setAttribute('stroke-width', '2');
+  g.appendChild(line);
+
+  var last = pts[pts.length - 1];
+  var halo = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  halo.setAttribute('cx', last.x); halo.setAttribute('cy', last.y);
+  halo.setAttribute('r', '8'); halo.setAttribute('fill', 'rgba(255,122,47,0.25)');
+  g.appendChild(halo);
+
+  var dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  dot.setAttribute('cx', last.x); dot.setAttribute('cy', last.y);
+  dot.setAttribute('r', '4'); dot.setAttribute('fill', '#FF7A2F');
+  g.appendChild(dot);
+}
+
+// ── Sleep/Energy chart ────────────────────────────────────────────────────
+
+function buildSleepChart(data) {
+  var g = document.getElementById('sleep-chart-g');
+  g.innerHTML = '';
+  if (!data || data.length < 2) {
+    var txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    txt.setAttribute('x', '200'); txt.setAttribute('y', '50');
+    txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('fill', '#545454');
+    txt.setAttribute('font-family', 'JetBrains Mono'); txt.setAttribute('font-size', '11');
+    txt.textContent = 'Noch keine Daten.';
+    g.appendChild(txt);
+    return;
+  }
+  var W = 400, H = 100, PAD = 12;
+
+  function makeLine(vals, color) {
+    var minV = Math.min.apply(null, vals), maxV = Math.max.apply(null, vals);
+    var range = maxV - minV || 1;
+    var pts = vals.map(function(v, i) {
+      return {
+        x: PAD + (i / (vals.length - 1)) * (W - PAD * 2),
+        y: H - PAD - ((v - minV) / range) * (H - PAD * 2),
+      };
+    });
+    var d = smoothPath(pts);
+
+    var glow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    glow.setAttribute('d', d); glow.setAttribute('fill', 'none');
+    glow.setAttribute('stroke', color); glow.setAttribute('stroke-width', '2.5');
+    glow.setAttribute('filter', 'url(#sleep-glow)');
+    g.appendChild(glow);
+
+    var line2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    line2.setAttribute('d', d); line2.setAttribute('fill', 'none');
+    line2.setAttribute('stroke', color); line2.setAttribute('stroke-width', '2');
+    g.appendChild(line2);
+  }
+
+  makeLine(data.map(function(d) { return d.sleep; }), '#5B9BD5');
+  makeLine(data.map(function(d) { return d.energy; }), '#FF7A2F');
+}
+
+// ── Macro rows ────────────────────────────────────────────────────────────
+
+function buildMacroRows(avg) {
+  var wrap = document.getElementById('macro-rows');
+  wrap.innerHTML = '';
+  var rows = [
+    { label: 'PROTEIN',       val: avg.protein_g },
+    { label: 'KOHLENHYDRATE', val: avg.carbs_g },
+    { label: 'FETT',          val: avg.fat_g },
+  ];
+  var maxVal = Math.max(avg.protein_g, avg.carbs_g, avg.fat_g, 1);
+  rows.forEach(function(row) {
+    var pct = (row.val / maxVal) * 100;
+    var div = document.createElement('div');
+    div.className = 'macro-row';
+    div.innerHTML =
+      '<span class="macro-label">' + row.label + '</span>' +
+      '<div class="macro-bar-wrap"><div class="macro-bar-dot" style="left:' + pct + '%"></div></div>' +
+      '<span class="macro-val">' + row.val + 'g</span>';
+    wrap.appendChild(div);
+  });
+}
+
+// ── Training schedule ─────────────────────────────────────────────────────
+
+var DAYS_DE  = ['MO','DI','MI','DO','FR','SA','SO'];
+var DAYS_EN  = ['mon','tue','wed','thu','fri','sat','sun'];
+var DE_TO_EN = { mo:'mon', di:'tue', mi:'wed', do:'thu', fr:'fri', sa:'sat', so:'sun' };
+
+var _scheduleState = DAYS_EN.map(function(d) { return { day: d, active: false, time: null }; });
+
+function buildDayBtns() {
+  var wrap = document.getElementById('day-btns');
+  wrap.innerHTML = '';
+  _scheduleState.forEach(function(s, i) {
+    var btn = document.createElement('button');
+    btn.className = 'day-btn' + (s.active ? ' active' : '');
+    btn.textContent = DAYS_DE[i];
+    btn.dataset.idx = i;
+    btn.addEventListener('click', function() {
+      _scheduleState[i].active = !_scheduleState[i].active;
+      buildDayBtns();
+      buildTimeInputs();
+    });
+    wrap.appendChild(btn);
+  });
+}
+
+function buildTimeInputs() {
+  var wrap = document.getElementById('time-inputs');
+  wrap.innerHTML = '';
+  _scheduleState.forEach(function(s, i) {
+    if (!s.active) return;
+    var row = document.createElement('div');
+    row.className = 'time-row';
+    row.innerHTML =
+      '<label>' + DAYS_DE[i] + '</label>' +
+      '<input type="time" value="' + (s.time || '') + '" data-idx="' + i + '">';
+    row.querySelector('input').addEventListener('change', function(e) {
+      _scheduleState[i].time = e.target.value || null;
+    });
+    wrap.appendChild(row);
+  });
+}
+
+// ── Tags: allergies + dislikes ────────────────────────────────────────────
+
+var _allergies = [], _dislikes = [], _tagType = 'dislike';
+
+function renderAllergyTags(uid, token) {
+  var wrap = document.getElementById('allergy-dislike-tags');
+  wrap.innerHTML = '';
+  var all = _allergies.map(function(a) { return { val: a, type: 'allergy' }; })
+    .concat(_dislikes.map(function(d) { return { val: d, type: 'dislike' }; }));
+  all.forEach(function(item) {
+    var tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.innerHTML = item.val + '<span class="tag-x" title="Entfernen">&times;</span>';
+    tag.querySelector('.tag-x').addEventListener('click', function() {
+      var action = item.type === 'allergy' ? 'remove_allergy' : 'remove_dislike';
+      patch({ uid: uid, token: token, action: action, item: item.val }).then(function(res) {
+        if (!res.ok) return;
+        if (item.type === 'allergy') _allergies = _allergies.filter(function(x) { return x !== item.val; });
+        else _dislikes = _dislikes.filter(function(x) { return x !== item.val; });
+        renderAllergyTags(uid, token);
+        showToast('Entfernt');
+      });
+    });
+    wrap.appendChild(tag);
+  });
+}
+
+// ── Fridge tags ───────────────────────────────────────────────────────────
+
+var _fridge = [];
+
+function renderFridgeTags() {
+  var wrap = document.getElementById('fridge-tags');
+  wrap.innerHTML = '';
+  _fridge.forEach(function(item, i) {
+    var tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.innerHTML = item + '<span class="tag-x">&times;</span>';
+    tag.querySelector('.tag-x').addEventListener('click', function() {
+      _fridge.splice(i, 1);
+      renderFridgeTags();
+    });
+    wrap.appendChild(tag);
+  });
+}
+
+// ── Populate ──────────────────────────────────────────────────────────────
+
+function populate(d, uid, token) {
+
+  // Arc
+  buildArc(d.adherenz_pct || 0);
+  document.getElementById('arc-num').textContent = d.adherenz_pct || 0;
+  document.getElementById('arc-kw').textContent = 'ADHERENZ · KW ' + (d.kw || '—');
+  var activeDays = Math.min(7, d.active_days_7 || 0);
+  document.getElementById('arc-days-text').innerHTML = activeDays + ' VON 7 TAGEN<br>IM ZIEL';
+
+  // Streak
+  document.getElementById('streak-num').textContent = d.streak || 0;
 
   // Milestone
-  if (d.meal_milestone_next != null) {
-    const diff = d.meal_milestone_next - d.meal_total;
-    document.getElementById('milestone-em').textContent = `${diff} Mahlzeiten`;
-    document.getElementById('milestone-sub').textContent = `bis Meilenstein ${d.meal_milestone_next}`;
-  } else {
-    document.getElementById('milestone-em').textContent = '500+';
-    document.getElementById('milestone-sub').textContent = 'Mahlzeiten erfasst';
+  var diff = (d.meal_milestone_next != null && d.meal_total != null)
+    ? d.meal_milestone_next - d.meal_total : null;
+  document.getElementById('milestone-diff').textContent = diff != null ? diff : '—';
+  document.getElementById('milestone-label').textContent = d.meal_milestone_next
+    ? 'BIS MEILENSTEIN ' + d.meal_milestone_next : 'MEILENSTEIN ERREICHT';
+
+  // Weight diff
+  if (d.weight_diff != null) {
+    var sign = d.weight_diff >= 0 ? '−' : '+';
+    document.getElementById('weight-diff-display').textContent =
+      sign + deFixed(Math.abs(d.weight_diff)) + ' KG';
+  }
+  if (d.weight_history && d.weight_history.length > 0) {
+    var first = d.weight_history[0];
+    var firstDate = new Date(first.date);
+    var weeksAgo = Math.round((Date.now() - firstDate.getTime()) / (7 * 86400000));
+    document.getElementById('weight-meta').textContent = 'SEIT START · VOR ' + weeksAgo + ' WOCHEN';
+    var firstLabel = firstDate.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' }).toUpperCase();
+    document.getElementById('weight-axis-left').textContent = firstLabel + ' · ' + deFixed(first.kg) + ' KG';
+    var last = d.weight_history[d.weight_history.length - 1];
+    document.getElementById('weight-axis-right').textContent = 'HEUTE · ' + deFixed(last.kg) + ' KG';
+  }
+  buildWeightChart(d.weight_history);
+
+  // Sleep & Energy
+  if (d.sleep_energy && d.sleep_energy.length > 0) {
+    var avgSleep  = d.sleep_energy.reduce(function(s, r) { return s + r.sleep; }, 0) / d.sleep_energy.length;
+    var avgEnergy = d.sleep_energy.reduce(function(s, r) { return s + r.energy; }, 0) / d.sleep_energy.length;
+    var eSign = avgEnergy >= 0 ? '+' : '';
+    document.getElementById('sleep-avg-label').textContent =
+      'Ø ' + deFixed(avgSleep) + 'h Schlaf · Energie ' + eSign + Math.round(avgEnergy) + '%';
+    var sleepFirst = new Date(d.sleep_energy[0].date);
+    document.getElementById('sleep-axis-left').textContent =
+      sleepFirst.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' }).toUpperCase();
+    buildSleepChart(d.sleep_energy);
   }
 
-  // Weight axis labels
-  if (d.weight_history.length > 0) {
-    const first = d.weight_history[0];
-    const last  = d.weight_history[d.weight_history.length - 1];
-    document.getElementById('weight-axis-start').textContent =
-      `${fmtDate(first.date)} · ${String(first.kg).replace('.', ',')} kg`;
-    document.getElementById('weight-axis-end').textContent =
-      `Heute · ${String(last.kg).replace('.', ',')} kg`;
-    // Caption: echte Dauer aus erstem und letztem Datum
-    const msPerWeek = 7 * 24 * 60 * 60 * 1000;
-    const weeks = Math.round((new Date(last.date) - new Date(first.date)) / msPerWeek);
-    document.getElementById('weight-caption').textContent =
-      weeks > 1 ? `Seit Start · vor ${weeks} Wochen` : 'Seit Start';
-  }
+  // Macro trend
+  if (d.macros_weekly_avg) buildMacroRows(d.macros_weekly_avg);
 
-  // Sleep/energy axis
-  if (d.sleep_energy.length > 0) {
-    const fs = d.sleep_energy[0], ls = d.sleep_energy[d.sleep_energy.length - 1];
-    document.getElementById('sleep-axis-start').textContent =
-      `${fmtDate(fs.date)} · ${fs.sleep.toFixed(1).replace('.', ',')}h · E ${fs.energy}/10`;
-    document.getElementById('sleep-axis-end').textContent =
-      `Heute · ${ls.sleep.toFixed(1).replace('.', ',')}h · E ${ls.energy}/10`;
-    // Caption
-    const avgSleep  = (d.sleep_energy.reduce((a, e) => a + e.sleep, 0) / d.sleep_energy.length).toFixed(1);
-    const firstE = d.sleep_energy[0].energy, lastE = ls.energy;
-    const ediff = lastE - firstE;
-    document.getElementById('sleep-caption').innerHTML =
-      `Ø ${avgSleep.replace('.', ',')}h Schlaf<br>Energie ${ediff >= 0 ? '+' : ''}${Math.round(ediff * 10)}%`;
-  }
+  // Today macros
+  var tm = d.today_macros || { kcal: 0, protein_g: 0, carbs_g: 0, fat_g: 0, meal_count: 0 };
+  document.getElementById('today-kcal').textContent = tm.kcal + ' kcal';
+  document.getElementById('today-meal-count').textContent = 'BISHER ' + tm.meal_count + ' MAHLZEITEN';
+  document.getElementById('today-chips').innerHTML =
+    '<span class="chip">' + tm.protein_g + 'g Protein</span>' +
+    '<span class="chip">' + tm.carbs_g   + 'g Carbs</span>' +
+    '<span class="chip">' + tm.fat_g     + 'g Fett</span>';
 
-  // Macros
-  const m = d.macros_weekly_avg;
-  if (m.protein_g || m.carbs_g || m.fat_g) {
-    document.getElementById('macro-protein-val').textContent = m.protein_g;
-    document.getElementById('macro-carbs-val').textContent   = m.carbs_g;
-    document.getElementById('macro-fat-val').textContent     = m.fat_g;
-    document.getElementById('macro-protein').dataset.width = Math.min(100, Math.round(m.protein_g / 180 * 100));
-    document.getElementById('macro-carbs').dataset.width   = Math.min(100, Math.round(m.carbs_g   / 220 * 100));
-    document.getElementById('macro-fat').dataset.width     = Math.min(100, Math.round(m.fat_g     /  75 * 100));
-  }
+  // Coaching heading
+  document.getElementById('coaching-heading').textContent =
+    'Wie soll ' + (d.coach_name || 'dein Coach') + ' mit dir arbeiten?';
 
-  // Coach name
-  document.getElementById('coach-name-display').textContent = d.coach_name ?? 'dein Coach';
-
-  // Tone
-  document.querySelectorAll('.tone-card').forEach(c =>
-    c.classList.toggle('active', c.dataset.tone === d.coaching_tone));
-
-  // Proaktivität
-  document.querySelectorAll('.prox-point').forEach(p => {
-    const active = p.dataset.prox === d.proactivity;
-    p.classList.toggle('active', active);
-    if (active) document.getElementById('prox-meaning').textContent = p.dataset.meaning;
-  });
-
-  // Weekly focus pills
-  document.querySelectorAll('.pill').forEach(p =>
-    p.classList.toggle('active', p.dataset.focus === d.weekly_focus));
+  // ── Tab 03 ──────────────────────────────────────────────────────────────
 
   // Goal
-  // data-goal jetzt direkt der API-Wert ("fat_loss" | "performance")
-  document.querySelectorAll('.goal-opt').forEach(o =>
-    o.classList.toggle('active', o.dataset.goal === d.goal));
-
-  // Current weight
-  if (d.current_weight_kg != null) {
-    document.getElementById('weight-val').value =
-      String(d.current_weight_kg).replace('.', ',');
-  }
-
-  // Weight trend
-  if (d.weight_diff != null && Number.isFinite(d.weight_diff) && d.weight_diff !== 0) {
-    const sign = d.weight_diff > 0 ? '−' : '+';
-    document.getElementById('weight-trend').innerHTML =
-      `${sign}${Math.abs(d.weight_diff).toFixed(1).replace('.', ',')} kg <em>seit Start</em>`;
-  }
-
-  // Training days
-  const days = d.training_days.map(x => x.toLowerCase());
-  document.querySelectorAll('.day').forEach(btn =>
-    btn.classList.toggle('active', days.includes(btn.dataset.day)));
-
-  // Tags
-  renderTags('allergies', [...(d.allergies ?? []), ...(d.dislikes ?? [])]);
-  renderTags('fridge', d.fridge ?? []);
-
-  // Run dev animations
-  runDevAnimations();
-}
-
-// ─── RENDER TAGS ─────────────────────────────────────
-function renderTags(containerId, items) {
-  const root = document.getElementById(containerId);
-  root.innerHTML = '';
-  items.forEach(item => {
-    const tag = document.createElement('span');
-    tag.className = 'tag';
-    tag.innerHTML = `${item} <button class="x" aria-label="entfernen">×</button>`;
-    root.appendChild(tag);
-  });
-  const addBtn = document.createElement('button');
-  addBtn.className = 'tag-add';
-  addBtn.textContent = '+ Hinzufügen';
-  root.appendChild(addBtn);
-}
-
-// ─── API HELPER ──────────────────────────────────────
-async function apiPatch(action, payload = {}) {
-  const res = await fetch(`${API_BASE}/api/dashboard-update`, {
-    method:  'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ uid, token, action, ...payload }),
-  });
-  return res.ok;
-}
-
-// ─── LOAD ────────────────────────────────────────────
-async function loadDashboard() {
-  if (!uid || !token) { showError(); return; }
-  try {
-    const res = await fetch(`${API_BASE}/api/dashboard?uid=${encodeURIComponent(uid)}&token=${encodeURIComponent(token)}`);
-    if (!res.ok) { showError(); return; }
-    const data = await res.json();
-    populate(data);
-    hideLoading();
-  } catch (e) {
-    showError();
-  }
-}
-
-function hideLoading() {
-  const ol = document.getElementById('loading-overlay');
-  ol.style.opacity = '0';
-  setTimeout(() => { ol.style.display = 'none'; }, 400);
-}
-
-function showError() {
-  document.getElementById('loading-overlay').style.display = 'none';
-  const err = document.getElementById('error-screen');
-  err.style.display = 'flex';
-}
-
-loadDashboard();
-
-// ─── COACHING INTERACTIONS ───────────────────────────
-document.getElementById('tone-grid').addEventListener('click', e => {
-  const card = e.target.closest('.tone-card');
-  if (!card) return;
-  document.querySelectorAll('.tone-card').forEach(c => c.classList.remove('active'));
-  card.classList.add('active');
-});
-
-document.getElementById('prox-track').addEventListener('click', e => {
-  const pt = e.target.closest('.prox-point');
-  if (!pt) return;
-  document.querySelectorAll('.prox-point').forEach(p => p.classList.remove('active'));
-  pt.classList.add('active');
-  const meaning = document.getElementById('prox-meaning');
-  meaning.style.opacity = '0';
-  setTimeout(() => { meaning.textContent = pt.dataset.meaning; meaning.style.opacity = '1'; }, 220);
-});
-
-document.getElementById('focus-tags').addEventListener('click', e => {
-  const p = e.target.closest('.pill');
-  if (p) p.classList.toggle('active');
-});
-
-// Save coaching changes
-document.getElementById('save-btn').addEventListener('click', async () => {
-  const btn = document.getElementById('save-btn');
-  const originalHTML = btn.innerHTML;
-  btn.textContent = 'Speichern…';
-
-  const tone        = document.querySelector('.tone-card.active')?.dataset.tone     ?? 'direkt';
-  const proactivity = document.querySelector('.prox-point.active')?.dataset.prox   ?? 'normal';
-  const focusPill   = document.querySelector('.pill.active');
-  const focus       = focusPill?.dataset.focus ?? null;
-
-  try {
-    const calls = [
-      apiPatch('update_coaching_tone', { tone }),
-      apiPatch('update_proactivity', { proactivity }),
-    ];
-    if (focus) calls.push(apiPatch('update_weekly_focus', { focus }));
-    await Promise.all(calls);
-    btn.textContent = 'Gespeichert.';
-    btn.style.color = 'var(--ink-1)';
-  } catch {
-    btn.textContent = 'Fehler — bitte nochmal';
-    btn.style.color = '#FF453A';
-  }
-  setTimeout(() => { btn.innerHTML = originalHTML; btn.style.color = ''; }, 2000);
-});
-
-// ─── PROFILE INTERACTIONS ────────────────────────────
-// Goal
-document.getElementById('goal-row').addEventListener('click', async e => {
-  const g = e.target.closest('.goal-opt');
-  if (!g) return;
-  document.querySelectorAll('.goal-opt').forEach(o => o.classList.remove('active'));
-  g.classList.add('active');
-  // data-goal ist direkt der API-Wert
-  await apiPatch('update_goal', { goal: g.dataset.goal });
-});
-
-// Days
-document.getElementById('days').addEventListener('click', async e => {
-  const d = e.target.closest('.day');
-  if (!d) return;
-  d.classList.toggle('active');
-  const activeDays = [...document.querySelectorAll('.day.active')].map(b => b.dataset.day);
-  await apiPatch('update_training_days', { days: activeDays });
-});
-
-// Tag containers
-function setupTagContainer(containerId, addAction, removeAction) {
-  const root = document.getElementById(containerId);
-  root.addEventListener('click', async e => {
-    if (e.target.classList.contains('x')) {
-      const tag = e.target.closest('.tag');
-      const item = tag.childNodes[0].textContent.trim();
-      tag.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-      tag.style.opacity = '0'; tag.style.transform = 'scale(0.85)';
-      setTimeout(() => tag.remove(), 280);
-      await apiPatch(removeAction, { item });
-    }
-    if (e.target.classList.contains('tag-add')) {
-      const v = prompt('Was möchtest du hinzufügen?');
-      if (v && v.trim()) {
-        const item = v.trim();
-        const tag = document.createElement('span');
-        tag.className = 'tag';
-        tag.innerHTML = `${item} <button class="x" aria-label="entfernen">×</button>`;
-        tag.style.opacity = '0'; tag.style.transform = 'scale(0.85)';
-        root.insertBefore(tag, e.target);
-        requestAnimationFrame(() => {
-          tag.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
-          tag.style.opacity = '1'; tag.style.transform = 'scale(1)';
+  var goalLabels = { fat_loss: 'Abnehmen', performance: 'Performance' };
+  document.querySelectorAll('.goal-btn').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.goal === (d.goal || 'fat_loss'));
+    btn.addEventListener('click', function() {
+      var newGoal = btn.dataset.goal;
+      var label = goalLabels[newGoal] || newGoal;
+      openDialog('Ziel ändern?',
+        'Ziel auf "' + label + '" ändern? Das beeinflusst alle Empfehlungen.'
+      ).then(function(ok) {
+        if (!ok) return;
+        return patch({ uid: uid, token: token, action: 'update_goal', goal: newGoal });
+      }).then(function(res) {
+        if (!res || !res.ok) return;
+        document.querySelectorAll('.goal-btn').forEach(function(b) {
+          b.classList.toggle('active', b.dataset.goal === newGoal);
         });
-        await apiPatch(addAction, { item });
+        showToast('Gespeichert');
+      });
+    });
+  });
+
+  // Weight input
+  var wInput  = document.getElementById('weight-input');
+  var wSaveBtn = document.getElementById('weight-save-btn');
+  var wDelta  = document.getElementById('profile-weight-delta');
+  if (d.current_weight_kg != null) wInput.value = String(d.current_weight_kg).replace('.', ',');
+  if (d.weight_diff != null) {
+    var wSign = d.weight_diff >= 0 ? '−' : '+';
+    wDelta.textContent = wSign + deFixed(Math.abs(d.weight_diff)) + ' kg seit Start';
+  }
+  wInput.addEventListener('input', function() { wSaveBtn.classList.add('visible'); });
+  wSaveBtn.addEventListener('click', function() {
+    var val = parseFloat(String(wInput.value).replace(',', '.'));
+    if (!isFinite(val) || val < 30 || val > 250) { showToast('Ungültiger Wert'); return; }
+    patch({ uid: uid, token: token, action: 'log_weight', weight_kg: val }).then(function(res) {
+      if (!res.ok) return;
+      wSaveBtn.classList.remove('visible');
+      if (d.start_weight_kg != null) {
+        var newDiff = Math.round((d.start_weight_kg - val) * 10) / 10;
+        var nd_sign = newDiff >= 0 ? '−' : '+';
+        wDelta.textContent = nd_sign + deFixed(Math.abs(newDiff)) + ' kg seit Start';
       }
-    }
+      showToast('Gewicht gespeichert ✓');
+    });
+  });
+
+  // Training days + schedule
+  var activeDayKeys = (d.training_days || []).map(function(x) {
+    return DE_TO_EN[x.toLowerCase()] || x;
+  });
+  var schedFromProfile = d.training_schedule || [];
+  _scheduleState = DAYS_EN.map(function(day) {
+    var existing = schedFromProfile.find ? schedFromProfile.find(function(s) { return s.day === day; }) : null;
+    return { day: day, active: activeDayKeys.indexOf(day) !== -1, time: existing ? existing.time : null };
+  });
+  buildDayBtns();
+  buildTimeInputs();
+
+  document.getElementById('schedule-save-btn').addEventListener('click', function() {
+    patch({ uid: uid, token: token, action: 'update_training_schedule', schedule: _scheduleState })
+      .then(function(res) { if (res.ok) showToast('Trainingsplan gespeichert ✓'); });
+  });
+
+  // Allergies + dislikes
+  _allergies = (d.allergies || []).slice();
+  _dislikes  = (d.dislikes  || []).slice();
+  renderAllergyTags(uid, token);
+
+  var tagTypeBtn = document.getElementById('tag-type-btn');
+  tagTypeBtn.addEventListener('click', function() {
+    _tagType = _tagType === 'dislike' ? 'allergy' : 'dislike';
+    tagTypeBtn.textContent = _tagType === 'allergy' ? 'ALLERGIE' : 'DISLIKE';
+    tagTypeBtn.classList.toggle('allergy', _tagType === 'allergy');
+  });
+
+  document.getElementById('tag-input').addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    var val = e.target.value.trim();
+    if (!val) return;
+    var action = _tagType === 'allergy' ? 'add_allergy' : 'add_dislike';
+    patch({ uid: uid, token: token, action: action, item: val }).then(function(res) {
+      if (!res.ok) return;
+      if (_tagType === 'allergy') _allergies.push(val); else _dislikes.push(val);
+      e.target.value = '';
+      renderAllergyTags(uid, token);
+      showToast('Hinzugefügt');
+    });
+  });
+
+  // Fridge
+  _fridge = (d.fridge || []).slice();
+  renderFridgeTags();
+
+  document.getElementById('fridge-input').addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    var val = e.target.value.trim();
+    if (!val) return;
+    _fridge.push(val);
+    e.target.value = '';
+    renderFridgeTags();
+  });
+
+  document.getElementById('fridge-save-btn').addEventListener('click', function() {
+    patch({ uid: uid, token: token, action: 'update_fridge', items: _fridge })
+      .then(function(res) { if (res.ok) showToast('Kühlschrank gespeichert ✓'); });
   });
 }
-setupTagContainer('allergies', 'add_dislike', 'remove_dislike');
-setupTagContainer('fridge', 'update_fridge', 'update_fridge');
 
-// Weight input: save on blur
-document.getElementById('weight-val').addEventListener('blur', async e => {
-  const raw = e.target.value.replace(',', '.').trim();
-  const kg  = parseFloat(raw);
-  if (Number.isFinite(kg) && kg >= 30 && kg <= 250) {
-    await apiPatch('log_weight', { weight_kg: kg });
-    document.getElementById('weight-val').value = String(kg).replace('.', ',');
+// ── Init ──────────────────────────────────────────────────────────────────
+
+(function() {
+  var params = new URLSearchParams(location.search);
+  var uid    = params.get('uid');
+  var token  = params.get('token');
+
+  if (!uid || !token) {
+    showError('Kein gültiger Link. Schreib DASHBOARD in WhatsApp.');
+    return;
   }
-});
+
+  fetch(API_BASE + '/api/dashboard?uid=' + encodeURIComponent(uid) + '&token=' + encodeURIComponent(token))
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.error) {
+        showError('Link abgelaufen. Schreib DASHBOARD in WhatsApp für einen neuen.');
+        return;
+      }
+      document.getElementById('loading').style.display = 'none';
+      var app = document.getElementById('app');
+      app.style.display = 'flex';
+      populate(d, uid, token);
+    })
+    .catch(function() {
+      showError('Verbindungsfehler. Bitte erneut versuchen.');
+    });
+}());
 </script>
 </body>
 </html>
