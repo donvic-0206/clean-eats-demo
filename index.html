@@ -330,16 +330,16 @@
     .locked-section { position: relative; }
     .locked-overlay {
       position: absolute; inset: 0;
-      background: rgba(10,10,10,0.85);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
+      background: rgba(10,10,10,0.6);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       gap: 12px; z-index: 10;
     }
     .locked-title { font-family: var(--sans); font-size: 15px; color: var(--ink-1); font-weight: 500; }
     .locked-sub { font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing: 0.08em; }
-    .coaching-content { pointer-events: none; }
+    .coaching-content { pointer-events: none; opacity: 0.35; }
     .tone-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px; }
     .tone-card {
       background: var(--ink-4); border-radius: 8px; padding: 12px 8px;
@@ -503,7 +503,7 @@
         </div>
       </div>
       <div class="arc-days-note">
-        <span class="arc-days-line"></span><span id="arc-days-text">— VON 7 TAGEN<br>IM ZIEL</span>
+        <span class="arc-days-line"></span><span id="arc-days-text">— VON — TAGEN<br>AKTIV</span>
       </div>
     </div>
 
@@ -561,16 +561,23 @@
         <span><span class="legend-dot" style="background:#5B9BD5"></span>Schlaf</span>
         <span><span class="legend-dot" style="background:var(--orange)"></span>Energie</span>
       </div>
-      <div class="chart-wrap">
-        <svg id="sleep-chart" viewBox="0 0 400 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">
-          <defs>
-            <filter id="sleep-glow" x="-10%" y="-40%" width="120%" height="180%">
-              <feGaussianBlur stdDeviation="2" result="blur"/>
-              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-          </defs>
-          <g id="sleep-chart-g"></g>
-        </svg>
+      <div style="display:flex;gap:6px;align-items:stretch">
+        <div style="display:flex;flex-direction:column;justify-content:space-between;padding:4px 0;min-width:16px">
+          <span style="font-family:var(--mono);font-size:9px;color:var(--ink-3)">10</span>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--ink-3)">5</span>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--ink-3)">0</span>
+        </div>
+        <div class="chart-wrap" style="flex:1">
+          <svg id="sleep-chart" viewBox="0 0 400 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">
+            <defs>
+              <filter id="sleep-glow" x="-10%" y="-40%" width="120%" height="180%">
+                <feGaussianBlur stdDeviation="2" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <g id="sleep-chart-g"></g>
+          </svg>
+        </div>
       </div>
       <div class="chart-axis">
         <span id="sleep-axis-left">—</span>
@@ -641,7 +648,7 @@
           <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
         </svg>
         <div class="locked-title">Verfügbar nach dem Launch</div>
-        <div class="locked-sub">KOMMT MIT VERSION 1.0</div>
+        <div class="locked-sub">KOMMT MIT VERSION 2.0</div>
       </div>
     </div>
   </div>
@@ -807,7 +814,7 @@ function buildArc(pct) {
     var a0 = startAngle + (sweep / N) * i + gapRad / 2;
     var a1 = startAngle + (sweep / N) * (i + 1) - gapRad / 2;
     var isActive = i < activeCount;
-    var isLast3  = isActive && i >= activeCount - 3;
+    var isLast3  = pct < 100 && isActive && i >= activeCount - 3;
     var rOuter = isLast3 ? R + 6  : R;
     var rInner = isLast3 ? R - 20 : R - 14;
 
@@ -1064,8 +1071,9 @@ function populate(d, uid, token) {
   buildArc(d.adherenz_pct || 0);
   document.getElementById('arc-num').textContent = d.adherenz_pct || 0;
   document.getElementById('arc-kw').textContent = 'ADHERENZ · KW ' + (d.kw || '—');
-  var activeDays = Math.min(7, d.active_days_7 || 0);
-  document.getElementById('arc-days-text').innerHTML = activeDays + ' VON 7 TAGEN<br>IM ZIEL';
+  var activeDays = d.active_days_week || 0;
+  var daysSoFar  = d.days_so_far || 7;
+  document.getElementById('arc-days-text').innerHTML = activeDays + ' VON ' + daysSoFar + ' TAGEN<br>AKTIV';
 
   // Streak
   document.getElementById('streak-num').textContent = d.streak || 0;
