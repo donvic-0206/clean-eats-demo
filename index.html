@@ -1209,7 +1209,15 @@ function populate(d, uid, token) {
 
   document.getElementById('schedule-save-btn').addEventListener('click', function() {
     patch({ uid: uid, token: token, action: 'update_training_schedule', schedule: _scheduleState })
-      .then(function(res) { if (res.ok) showToast('Trainingsplan gespeichert ✓'); });
+      .then(function(res) {
+        if (res.ok) {
+          showToast('Trainingsplan gespeichert ✓');
+        } else {
+          res.json().then(function(e) {
+            showToast('Fehler: ' + (e.error || res.status));
+          });
+        }
+      });
   });
 
   // Allergies + dislikes
