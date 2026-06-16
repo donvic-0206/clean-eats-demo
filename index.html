@@ -530,20 +530,27 @@
       <div class="eyebrow">GEWICHTSVERLAUF</div>
       <div class="weight-big" id="weight-diff-display">— KG</div>
       <div class="weight-meta" id="weight-meta">SEIT START</div>
-      <div class="chart-wrap">
-        <svg id="weight-chart" viewBox="0 0 400 120" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">
-          <defs>
-            <linearGradient id="weight-grad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#FF7A2F" stop-opacity="0.3"/>
-              <stop offset="100%" stop-color="#FF7A2F" stop-opacity="0"/>
-            </linearGradient>
-            <filter id="line-glow" x="-10%" y="-40%" width="120%" height="180%">
-              <feGaussianBlur stdDeviation="2.5" result="blur"/>
-              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-          </defs>
-          <g id="weight-chart-g"></g>
-        </svg>
+      <div style="display:flex;gap:6px;align-items:stretch">
+        <div style="display:flex;flex-direction:column;justify-content:space-between;padding:4px 0;min-width:32px">
+          <span id="weight-y-top" style="font-family:var(--mono);font-size:9px;color:var(--ink-3)">—</span>
+          <span id="weight-y-mid" style="font-family:var(--mono);font-size:9px;color:var(--ink-3)">—</span>
+          <span id="weight-y-bot" style="font-family:var(--mono);font-size:9px;color:var(--ink-3)">—</span>
+        </div>
+        <div class="chart-wrap" style="flex:1">
+          <svg id="weight-chart" viewBox="0 0 400 120" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">
+            <defs>
+              <linearGradient id="weight-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#FF7A2F" stop-opacity="0.3"/>
+                <stop offset="100%" stop-color="#FF7A2F" stop-opacity="0"/>
+              </linearGradient>
+              <filter id="line-glow" x="-10%" y="-40%" width="120%" height="180%">
+                <feGaussianBlur stdDeviation="2.5" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <g id="weight-chart-g"></g>
+          </svg>
+        </div>
       </div>
       <div class="chart-axis">
         <span id="weight-axis-left">—</span>
@@ -1072,8 +1079,8 @@ function populate(d, uid, token) {
   document.getElementById('arc-num').textContent = d.adherenz_pct || 0;
   document.getElementById('arc-kw').textContent = 'ADHERENZ · KW ' + (d.kw || '—');
   var activeDays = d.active_days_week || 0;
-  var daysSoFar  = d.days_so_far || 7;
-  document.getElementById('arc-days-text').innerHTML = activeDays + ' VON ' + daysSoFar + ' TAGEN<br>AKTIV';
+  var daysSoFar  = d.days_so_far || 7; // used for %-Berechnung im Arc, nicht im Text
+  document.getElementById('arc-days-text').innerHTML = activeDays + ' VON 7 TAGEN<br>AKTIV';
 
   // Streak
   document.getElementById('streak-num').textContent = d.streak || 0;
@@ -1102,6 +1109,17 @@ function populate(d, uid, token) {
     document.getElementById('weight-axis-right').textContent = 'HEUTE · ' + deFixed(last.kg) + ' KG';
   }
   buildWeightChart(d.weight_history);
+
+  // Gewicht Y-Achse Labels (dynamisch aus Daten)
+  if (d.weight_history && d.weight_history.length > 0) {
+    var wKgs = d.weight_history.map(function(w) { return w.kg; });
+    var wMax = Math.ceil(Math.max.apply(null, wKgs) * 2) / 2;  // auf 0,5 aufrunden
+    var wMin = Math.floor(Math.min.apply(null, wKgs) * 2) / 2; // auf 0,5 abrunden
+    var wMid = Math.round((wMax + wMin) / 2 * 2) / 2;          // Mitte auf 0,5
+    document.getElementById('weight-y-top').textContent = deFixed(wMax) + ' kg';
+    document.getElementById('weight-y-mid').textContent = deFixed(wMid) + ' kg';
+    document.getElementById('weight-y-bot').textContent = deFixed(wMin) + ' kg';
+  }
 
   // Sleep & Energy
   if (d.sleep_energy && d.sleep_energy.length > 0) {
