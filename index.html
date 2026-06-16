@@ -330,16 +330,16 @@
     .locked-section { position: relative; }
     .locked-overlay {
       position: absolute; inset: 0;
-      background: rgba(10,10,10,0.6);
-      backdrop-filter: blur(3px);
-      -webkit-backdrop-filter: blur(3px);
+      background: rgba(10,10,10,0.45);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       gap: 12px; z-index: 10;
     }
     .locked-title { font-family: var(--sans); font-size: 15px; color: var(--ink-1); font-weight: 500; }
     .locked-sub { font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing: 0.08em; }
-    .coaching-content { pointer-events: none; opacity: 0.35; }
+    .coaching-content { pointer-events: none; opacity: 0.6; }
     .tone-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px; }
     .tone-card {
       background: var(--ink-4); border-radius: 8px; padding: 12px 8px;
@@ -570,9 +570,9 @@
       </div>
       <div style="display:flex;gap:6px;align-items:stretch">
         <div style="display:flex;flex-direction:column;justify-content:space-between;padding:4px 0;min-width:16px">
-          <span style="font-family:var(--mono);font-size:9px;color:var(--ink-3)">10</span>
-          <span style="font-family:var(--mono);font-size:9px;color:var(--ink-3)">5</span>
-          <span style="font-family:var(--mono);font-size:9px;color:var(--ink-3)">0</span>
+          <span id="sleep-y-top" style="font-family:var(--mono);font-size:9px;color:var(--ink-3)">—</span>
+          <span id="sleep-y-mid" style="font-family:var(--mono);font-size:9px;color:var(--ink-3)">—</span>
+          <span id="sleep-y-bot" style="font-family:var(--mono);font-size:9px;color:var(--ink-3)">—</span>
         </div>
         <div class="chart-wrap" style="flex:1">
           <svg id="sleep-chart" viewBox="0 0 400 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">
@@ -1132,6 +1132,15 @@ function populate(d, uid, token) {
     document.getElementById('sleep-axis-left').textContent =
       sleepFirst.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' }).toUpperCase();
     buildSleepChart(d.sleep_energy);
+
+    // Sleep Y-Achse dynamisch aus Daten
+    var sleepVals  = d.sleep_energy.map(function(r) { return r.sleep; });
+    var sMax = Math.ceil(Math.max.apply(null, sleepVals));
+    var sMin = Math.floor(Math.min.apply(null, sleepVals));
+    var sMid = Math.round((sMax + sMin) / 2);
+    document.getElementById('sleep-y-top').textContent = sMax;
+    document.getElementById('sleep-y-mid').textContent = sMid;
+    document.getElementById('sleep-y-bot').textContent = sMin;
   }
 
   // Macro trend
