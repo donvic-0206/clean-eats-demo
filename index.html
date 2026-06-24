@@ -790,7 +790,7 @@ function patch(body) {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  }).then(function(r) { return r.json(); });
+  });
 }
 
 // ── Arc (28 Segmente) ─────────────────────────────────────────────────────
